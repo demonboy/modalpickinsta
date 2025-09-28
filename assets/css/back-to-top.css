@@ -1,0 +1,296 @@
+/**
+ * Back to Top Button Styling
+ * Provides responsive design and accessibility features
+ */
+
+/* Base button styles */
+.back-to-top-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: #007cba;
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 124, 186, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+    outline: none;
+    z-index: 9999;
+    font-size: 0;
+    line-height: 0;
+    padding: 0;
+    margin: 0;
+}
+
+/* Button visibility states */
+.back-to-top-btn.back-to-top-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hover effects */
+.back-to-top-btn:hover {
+    background-color: #005a87;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 124, 186, 0.4);
+}
+
+/* Focus states for accessibility */
+.back-to-top-btn:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+/* Active state */
+.back-to-top-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 124, 186, 0.3);
+}
+
+/* Disabled state */
+.back-to-top-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* SVG icon styling */
+.back-to-top-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    transition: transform 0.2s ease;
+}
+
+.back-to-top-btn:hover svg {
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .back-to-top-btn {
+        width: 45px;
+        height: 45px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .back-to-top-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .back-to-top-btn {
+        width: 40px;
+        height: 40px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .back-to-top-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .back-to-top-btn {
+        background-color: #000000;
+        color: #ffffff;
+        border: 2px solid #ffffff;
+    }
+    
+    .back-to-top-btn:hover {
+        background-color: #ffffff;
+        color: #000000;
+    }
+    
+    .back-to-top-btn:focus {
+        outline: 3px solid #ffffff;
+        outline-offset: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .back-to-top-btn {
+        transition: opacity 0.3s ease;
+    }
+    
+    .back-to-top-btn:hover {
+        transform: none;
+    }
+    
+    .back-to-top-btn:hover svg {
+        transform: none;
+    }
+    
+    .back-to-top-btn:active {
+        transform: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .back-to-top-btn {
+        background-color: #007cba;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 124, 186, 0.5);
+    }
+    
+    .back-to-top-btn:hover {
+        background-color: #005a87;
+        box-shadow: 0 6px 16px rgba(0, 124, 186, 0.6);
+    }
+}
+
+/* Print styles - hide button when printing */
+@media print {
+    .back-to-top-btn {
+        display: none !important;
+    }
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Animation keyframes for entrance */
+@keyframes backToTopFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes backToTopFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+}
+
+/* Entrance animation */
+.back-to-top-btn.back-to-top-visible {
+    animation: backToTopFadeIn 0.3s ease-out;
+}
+
+/* Exit animation */
+.back-to-top-btn:not(.back-to-top-visible) {
+    animation: backToTopFadeOut 0.3s ease-in;
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .back-to-top-btn.back-to-top-visible {
+        animation: none;
+    }
+    
+    .back-to-top-btn:not(.back-to-top-visible) {
+        animation: none;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .back-to-top-btn {
+        width: 55px;
+        height: 55px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .back-to-top-btn svg {
+        width: 26px;
+        height: 26px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .back-to-top-btn:hover {
+        background-color: #007cba;
+        transform: none;
+        box-shadow: 0 4px 12px rgba(0, 124, 186, 0.3);
+    }
+    
+    .back-to-top-btn:hover svg {
+        transform: none;
+    }
+}
+
+/* Ensure button doesn't interfere with other fixed elements */
+.back-to-top-btn {
+    /* Avoid conflicts with WordPress admin bar */
+    margin-bottom: 0;
+}
+
+/* WordPress admin bar compatibility */
+@media screen and (max-width: 782px) {
+    .back-to-top-btn {
+        bottom: 20px;
+    }
+}
+
+@media screen and (min-width: 783px) {
+    .admin-bar .back-to-top-btn {
+        bottom: 32px;
+    }
+}
+
+/* Ensure proper stacking context */
+.back-to-top-btn {
+    isolation: isolate;
+}
+
+/* Loading state for when scrolling is in progress */
+.back-to-top-btn[aria-pressed="true"] {
+    background-color: #005a87;
+    cursor: wait;
+}
+
+.back-to-top-btn[aria-pressed="true"] svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Disable spin animation for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .back-to-top-btn[aria-pressed="true"] svg {
+        animation: none;
+    }
+}

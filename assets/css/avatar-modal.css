@@ -1,0 +1,33 @@
+.edit-avatar-modal h3 { margin: 16px 0; }
+.edit-avatar-modal .avatar-current { margin-bottom: 12px; }
+img.avatar-square { border-radius: 50% !important; }
+.edit-avatar-modal .avatar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.edit-avatar-modal .field-error { color: #b00020; font-size: 13px; }
+
+/* Editable avatar affordance in profile modal */
+.profile-modal-avatar-wrap { position: relative; display: inline-block; }
+.avatar-clickable { cursor: pointer; }
+.avatar-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  border-radius: 0;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+.profile-modal-avatar-wrap:hover .avatar-overlay { opacity: 1; }
+/* Hidden by default unless modal is in profile edit state */
+.avatar-overlay { display: none; }
+#universal-modal.is-profile-edit .avatar-overlay { display: block; }
+.avatar-clickable { pointer-events: none; }
+#universal-modal.is-profile-edit .avatar-clickable { pointer-events: auto; cursor: pointer; }
+.avatar-overlay.no-radius { border-radius: 0; }
+

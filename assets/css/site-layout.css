@@ -1,0 +1,17 @@
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Global gallery adjustments (moved from home inline styles) */
+.wp-block-gallery {
+    height: auto !important;
+    margin-bottom: 20px;
+}
+
+.wp-block-gallery img {
+    height: auto;
+    width: 100%;
+    object-fit: contain;
+}
+

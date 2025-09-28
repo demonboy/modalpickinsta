@@ -1,0 +1,44 @@
+#follow-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.follow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.follow-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.follow-user-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-direction: row !important;
+  white-space: nowrap;
+}
+
+.follow-user-meta .follow-name,
+.follow-user-meta .follow-genre {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.follow-user-meta .follow-name {
+  margin: 0;
+}
+
+.follow-actions {
+  display: flex;
+  align-items: center;
+}
+
+

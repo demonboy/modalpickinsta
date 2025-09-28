@@ -1,0 +1,183 @@
+#universal-modal.modal--full .modal-content {
+    left: 0;
+    transform: translateY(100%);
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+}
+
+#universal-modal.modal--full.show .modal-content {
+    transform: translateY(0);
+}
+
+/* Inherit theme typography/layout for story display modal only */
+#universal-modal.modal--full {
+    font-family: inherit;
+}
+
+/* Large screens: match other modal styling, 90% width, curved corners, centered */
+@media (min-width: 1024px) {
+    #universal-modal.modal--full .modal-content {
+        left: 50%;
+        transform: translateX(-50%) translateY(100%);
+        width: 90vw;
+        max-width: 90vw;
+        height: auto;
+        max-height: 90vh;
+        border-radius: 12px 12px 0 0;
+    }
+    #universal-modal.modal--full.show .modal-content {
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Center children inside the top constrained group when a custom class is applied in the editor */
+#universal-modal.modal--full .wp-site-blocks .modal-center > :not(.alignfull):not(.alignwide) {
+    max-width: var(--wp--style--global--content-size);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Center the group itself when preferred */
+#universal-modal.modal--full .wp-site-blocks .modal-center {
+    max-width: var(--wp--style--global--content-size);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Story body images: bleed wider than text on tablet/desktop, 100% on mobile */
+/* Target only figures inserted into the story body (exclude featured image) */
+@media (min-width: 782px) {
+  #universal-modal.modal--full .wp-site-blocks .is-layout-constrained > figure[data-attachment-id] {
+    max-width: var(--wp--style--global--wide-size);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Tablet/desktop: bleed Story body figures slightly wider than content */
+@media (min-width: 782px) {
+  /* Allow horizontal bleed within the full-screen Story modal */
+  #universal-modal.modal--full .modal-content { overflow: visible; }
+  #universal-modal.modal--full .modal-body { overflow-x: visible; }
+
+  /* Force full-bleed using viewport width */
+  #universal-modal.modal--full .story-modal-content figure.alignwide[data-attachment-id] {
+    width: 100vw;
+    max-width: none;
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Override global image cap so images can fill the widened figure */
+  #universal-modal.modal--full .story-modal-content figure.alignwide[data-attachment-id] img[class*="wp-image-"] {
+    width: 100%;
+    max-width: none !important;
+    height: auto;
+    display: block;
+  }
+  /* Remove side padding so bleed stays centered */
+  #universal-modal.modal--full .modal-body {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  /* Remove post content padding within modal */
+  #universal-modal.modal--full .story-modal-content .wp-block-post-content.has-global-padding {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+#universal-modal.modal--full .story-modal-content figure[data-attachment-id] img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 781px) {
+  #universal-modal.modal--full .story-modal-content figure[data-attachment-id] {
+    max-width: 100%;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Modal Story: center oversized Image blocks (alignwide) - target actual modal DOM */
+@media (min-width: 782px) {
+  /* In modal, base figure width on post content (body text) width */
+  #universal-modal.modal--full .wp-block-post-content .is-layout-constrained > figure.wp-block-image.alignwide.size-full {
+    max-width: var(--wp--style--global--content-size) !important;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: visible;
+  }
+  #universal-modal.modal--full .wp-block-post-content figure.wp-block-image.alignwide.size-full {
+    overflow: visible;
+  }
+  #universal-modal.modal--full .wp-block-post-content figure.wp-block-image.alignwide.size-full > img {
+    display: block;
+    width: calc(var(--wp--style--global--content-size) * 1.2) !important;
+    max-width: none !important;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  /* Caption: same width/centering as image; text left-aligned */
+  #universal-modal.modal--full .wp-block-post-content figure.wp-block-image.alignwide.size-full > figcaption {
+    width: calc(var(--wp--style--global--content-size) * 1.2);
+    max-width: none;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: left;
+  }
+}
+@media (max-width: 781px) {
+  #universal-modal.modal--full .wp-block-post-content figure.wp-block-image.alignwide.size-full > img {
+    width: 100%;
+    max-width: 100%;
+    position: static;
+    left: auto;
+    transform: none;
+  }
+  #universal-modal.modal--full .wp-block-post-content figure.wp-block-image.alignwide.size-full > figcaption {
+    width: 100%;
+    max-width: 100%;
+    position: static;
+    left: auto;
+    transform: none;
+    text-align: left;
+  }
+}
+
+/* Modal display spacing for paragraphs and images */
+#universal-modal.modal--full .wp-block-post-content p { margin: 1rem 0; }
+#universal-modal.modal--full .wp-block-post-content figure.wp-block-image { margin: 1rem 0; }
+
+/* Front-end Story view: center oversized alignwide images inside figure */
+@media (min-width: 782px) {
+  .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full {
+    overflow: visible;
+  }
+  .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full > img {
+    display: block;
+    width: 110%;
+    max-width: none;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 781px) {
+  .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full > img {
+    width: 100%;
+    max-width: 100%;
+    position: static;
+    left: auto;
+    transform: none;
+  }
+}
+

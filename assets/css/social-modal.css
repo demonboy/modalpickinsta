@@ -1,0 +1,27 @@
+.acf-social-message { margin-top: 8px; font-size: 14px; }
+.acf-social-message.is-success { color: #1a7f37; }
+.acf-social-message.is-error { color: #b00020; }
+.social-help { font-size: 12px; color: #666; margin: 8px 0 12px; }
+
+
+/* Match profile modal inner spacing */
+.social-modal-content { padding: 16px; }
+
+
+/* Stabilize icon rows during live updates to prevent bounce */
+#social-icons-active,
+#social-icons-inactive {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px; /* reserve space while icons render */
+}
+
+.social-icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

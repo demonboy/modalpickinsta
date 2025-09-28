@@ -1,0 +1,83 @@
+{
+  "version": 2,
+  "settings": {
+    "layout": {
+      "contentSize": "800px",
+      "wideSize": "1400px"
+    },
+    "typography": {
+      "fontFamilies": [
+        {
+          "name": "Galano Grotesque Alt",
+          "slug": "galano-grotesque-alt",
+          "fontFamily": "'Galano Grotesque Alt', sans-serif",
+          "fontFace": [
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "400",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltRegular.otf"
+              ]
+            },
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "500",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltMedium.otf"
+              ]
+            },
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "300",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltLight.otf"
+              ]
+            },
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "100",
+              "fontStyle": "normal",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltThin.otf"
+              ]
+            },
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "300",
+              "fontStyle": "italic",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltLightItalic.otf"
+              ]
+            },
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "500",
+              "fontStyle": "italic",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltMediumItalic.otf"
+              ]
+            },
+            {
+              "fontFamily": "Galano Grotesque Alt",
+              "fontWeight": "100",
+              "fontStyle": "italic",
+              "fontDisplay": "swap",
+              "src": [
+                "/wp-content/uploads/fonts/GalanoGrotesqueAltThinItalic.otf"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

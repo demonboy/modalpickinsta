@@ -1,0 +1,10 @@
+.arch-search { display: inline-flex; align-items: center; gap: .5rem; position: relative; }
+.arch-search__toggle { background: none; border: 0; padding: 0; line-height: 1; cursor: pointer; }
+.arch-search__form { display: inline-flex; align-items: center; gap: .5rem; overflow: hidden; max-width: 0; opacity: 0; transition: max-width .25s ease, opacity .2s ease; }
+.arch-search__input { min-width: 0; width: 100%; }
+.arch-search--open .arch-search__form { max-width: 16rem; opacity: 1; }
+@media (max-width: 782px){ .arch-search--open .arch-search__form { max-width: 60vw; } }
+@media (prefers-reduced-motion: reduce){ .arch-search__form { transition: none; } }
+
+
+

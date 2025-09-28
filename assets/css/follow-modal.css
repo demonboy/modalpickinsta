@@ -1,0 +1,20 @@
+.follow-modal-header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.follow-tabs{display:flex;gap:8px}
+.follow-tab{background:transparent;border:1px solid #ddd;padding:6px 10px;border-radius:4px}
+.follow-tab.is-active{border-color:#333}
+.follow-tab.followers-tab{padding:0;border:none;background:transparent}
+.follow-tab.followers-tab svg{width:150px;height:150px;display:block;fill:#666;transition:fill .2s ease, filter .2s ease}
+.follow-tab.followers-tab:hover svg,.follow-tab.followers-tab:focus svg{fill:#222;filter:brightness(0.9)}
+.follow-search input{width:100%;max-width:280px}
+#follow-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.follow-row{display:flex;align-items:center;gap:12px;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0}
+.follow-user{display:flex;gap:10px;align-items:center}
+.follow-user-meta{display:flex;flex-direction:column}
+.follow-actions .btn-unfollow,.follow-actions .btn-block,.follow-actions .btn-unblock{border:1px solid #ddd;background:#f8f8f8;border-radius:4px;padding:4px 8px}
+.follow-actions .btn-message{background:transparent;border:none}
+@media (max-width:600px){.follow-search input{max-width:180px}}
+
+/* Match other modal body spacing */
+.follow-modal-content{padding:16px}
+
+

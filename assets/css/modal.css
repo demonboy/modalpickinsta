@@ -1,0 +1,542 @@
+/* MODAL */
+
+/* Prevent background scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Modal base */
+#universal-modal {
+  display: none;            /* hidden by default */
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+}
+
+/* Backdrop */
+#universal-modal .modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+/* Modal content sliding up smoothly */
+#universal-modal .modal-content {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%); /* start off-screen */
+  width: 90%;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
+  padding: 0; /* Remove padding to eliminate gap */
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+  opacity: 0; /* start transparent */
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden; /* Container doesn't scroll */
+  /* Consistent modal height */
+  height: min(80dvh, 720px);
+}
+
+/* Show modal */
+#universal-modal.show .modal-content {
+  transform: translateX(-50%) translateY(0); /* slide up into view */
+  opacity: 1; /* fade in */
+}
+
+/* Modal header - sticky at top */
+#universal-modal .modal-header {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 12px 16px;
+  border-bottom: 0px solid #eee;
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Hide profile header row in Gear section */
+#universal-modal.is-gear .profile-modal-header {
+  display: none;
+}
+
+/* Close button */
+#universal-modal .modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+}
+
+#universal-modal .modal-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+#universal-modal .modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Remove desktop absolute positioning so back participates in header layout */
+
+/* Mobile: keep close button always visible and tappable */
+@media (max-width: 782px) {
+  #universal-modal .modal-close {
+    position: static; /* keep inline within sticky header */
+    top: auto;
+    right: auto;
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    border-radius: 22px;
+  }
+  #universal-modal .modal-back {
+    position: static; /* keep inline within sticky header */
+    top: auto;
+    left: auto;
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    border-radius: 22px;
+  }
+}
+
+/* Hide header back button only for the comments modal */
+#universal-modal[data-active-modal="comments"] .modal-back {
+  display: none !important;
+}
+
+/* Modal body */
+#universal-modal .modal-body {
+  margin-top: 0;  /* Remove top margin */
+  padding: 0 20px 0px 20px;  /* Top: 0, Right: 20px, Bottom: 20px, Left: 20px */
+  flex: 1;
+  overflow-y: auto;
+ 	/* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  /* Crossfade content swaps */
+  transition: opacity 180ms ease-in-out;
+}
+
+#universal-modal .modal-body::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+/* Fade state */
+#universal-modal .modal-body.is-loading {
+  opacity: 0;
+}
+
+/* Small screens: full viewport height for better usability */
+@media (max-width: 600px) {
+  #universal-modal .modal-content { height: 100dvh; }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  #universal-modal .modal-body { transition: none !important; }
+}
+
+/* COMMENT FORM */
+
+/* WordPress comment form - make it sticky at bottom of modal content */
+#universal-modal #respond {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 15px 20px 20px 20px; /* Extra bottom padding to reach edge */
+  z-index: 10;
+  margin-top: 20px;
+  margin-left: -20px;
+  margin-right: -20px;
+  margin-bottom: 0;
+  border-radius: 0 0 12px 12px; /* Match modal content bottom radius */
+}
+
+/* Style the WordPress comment form input and button */
+#universal-modal #respond .sticky-comment-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0; /* Don't shrink */
+}
+
+/* User avatar styling */
+#universal-modal #respond .sticky-comment-form .user-avatar {
+  flex-shrink: 0;
+}
+
+#universal-modal #respond .sticky-comment-form .user-avatar img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+/* Style the WordPress comment form input and button */
+#universal-modal #respond .sticky-comment-form input[type="text"] {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 24px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+#universal-modal #respond .sticky-comment-form input[type="text"]:focus {
+  border-color: #007cba;
+}
+
+#universal-modal #respond .sticky-comment-form .comment-submit-btn {
+  text-indent: -9999px; /* Hide the "Post" text */
+  background: #007cba;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 50px; /* Wider for pill shape */
+  height: 40px; /* Keep height same */
+}
+
+#universal-modal #respond .sticky-comment-form .comment-submit-btn:hover {
+  background: #005a87;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  #universal-modal #respond {
+    padding: 12px 15px;
+  }
+  
+  #universal-modal #respond .sticky-comment-form {
+    gap: 8px;
+  }
+  
+  #universal-modal #respond .sticky-comment-form input[type="text"] {
+    padding: 10px 14px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  #universal-modal #respond .sticky-comment-form .comment-submit-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
+
+/* COMMENT STYLING */
+
+.comment-row {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: start;
+}
+
+.comment-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.comment-author {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.comment-author a, .reply-author a {
+    text-decoration: none;
+}
+
+.comment-text {
+    line-height: 1.4;
+    font-size: 14px;
+}
+
+.comment-actions {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* Ensure consistent alignment for reply like buttons */
+.reply-item .comment-actions {
+    width: 50px;
+    flex-shrink: 0;
+}
+
+.comment-time {
+    font-weight: normal;
+    color: #999;
+}
+
+.comment-reply-link a {
+    font-weight: normal;
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.comment-reply-link a:hover {
+    text-decoration: underline;
+}
+
+.comment-reply-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-reply-wrapper a {
+    font-weight: normal;
+    color: #999;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.comment-reply-wrapper a:hover {
+    text-decoration: underline;
+}
+
+.comment-replies {
+    margin-left: 20px;
+    margin-top: 10px;
+}
+
+/* Reply styling */
+.reply-item {
+    margin-left: 20px;
+    margin-bottom: 10px;
+    padding-left: 15px;
+}
+
+.reply-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.reply-avatar img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.reply-content {
+    flex: 1;
+}
+
+.reply-author {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.reply-time {
+    color: #666;
+    font-weight: normal;
+}
+
+.reply-text {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.comment-replies-wrapper {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: start;
+}
+
+.replies-spacer {
+    /* Empty column to match comment-avatar width */
+}
+
+.comment-replies {
+    margin-top: 0;
+}
+
+.replies-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+    color: #666;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.replies-toggle:hover {
+    color: #333;
+}
+
+.replies-count {
+    font-weight: 500;
+}
+
+.replies-arrow {
+    transition: transform 0.2s ease;
+    font-size: 12px;
+}
+
+.replies-toggle.expanded .replies-arrow {
+    transform: rotate(90deg);
+}
+
+.replies-content {
+    margin-top: 5px;
+}
+
+/* Reply form styling to match sticky comment form */
+.reply-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px 0;
+}
+
+.reply-form input[type="text"] {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.reply-form input[type="text"]:focus {
+    border-color: #007cba;
+}
+
+.reply-form .submit-reply {
+    text-indent: -9999px; /* Hide the "Submit" text */
+    background: #007cba;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px 20px;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 50px;
+    height: 40px;
+}
+
+.reply-form .submit-reply:hover {
+    background: #005a87;
+}
+
+.reply-form .cancel-reply {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 24px;
+    padding: 12px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.reply-form .cancel-reply:hover {
+    background: #e5e5e5;
+}
+
+/* LIKE BUTTON STYLING */
+
+.like-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 5px 5px 0;
+    margin-right: 10px;
+}
+
+.like-icon {
+    width: 20px;
+    height: 20px;
+    background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.99997 20H17.1919C17.9865 20 18.7058 19.5296 19.0243 18.8016L21.8323 12.3833C21.9429 12.1305 22 11.8576 22 11.5816V11C22 9.89543 21.1045 9 20 9H13.5L14.7066 4.5757C14.8772 3.95023 14.5826 3.2913 14.0027 3.00136V3.00136C13.4204 2.7102 12.7134 2.87256 12.3164 3.3886L8.41472 8.46082C8.14579 8.81044 7.99997 9.23915 7.99997 9.68024V20ZM7.99997 20H2V10H7.99997V20Z" stroke="%23000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    text-indent: -9999px; /* Hide any text content */
+}
+
+.like-button.liked .like-icon {
+    background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.99997 20H17.1919C17.9865 20 18.7058 19.5296 19.0243 18.8016L21.8323 12.3833C21.9429 12.1305 22 11.8576 22 11.5816V11C22 9.89543 21.1045 9 20 9H13.5L14.7066 4.5757C14.8772 3.95023 14.5826 3.2913 14.0027 3.00136V3.00136C13.4204 2.7102 12.7134 2.87256 12.3164 3.3886L8.41472 8.46082C8.14579 8.81044 7.99997 9.23915 7.99997 9.68024V20ZM7.99997 20H2V10H7.99997V20Z" fill="%23e74c3c" stroke="%23e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+
+.like-count:empty {
+    display: none;
+}
+
+.modal-body {
+	font-size: clamp(0.75rem, 0.75rem + ((1vw - 0.2rem) * 0.481), 1rem);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .comment-row {
+        grid-template-columns: 35px 1fr;
+        gap: 10px;
+    }
+    
+    .comment-replies-wrapper {
+        grid-template-columns: 35px 1fr;
+        gap: 10px;
+    }
+    
+    .comment-avatar img {
+        width: 35px;
+        height: 35px;
+    }
+}

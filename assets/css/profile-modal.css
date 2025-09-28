@@ -1,0 +1,65 @@
+/* Profile menu shortcode styles */
+.profile-menu-link { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; }
+.profile-menu-avatar img.menu-avatar-circle { border-radius: 999px; width: 40px; height: 40px; object-fit: cover; }
+.profile-menu-label { font-size: 12px; line-height: 1; }
+.profile-modal-content { padding: 16px; }
+.profile-modal-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.profile-modal-avatar { border-radius: 50%; }
+.profile-modal-name { margin: 0; font-size: 1.25rem; }
+.profile-public-name { font-weight: 700; }
+.profile-modal-handle { color: #666; font-size: .95rem; }
+.profile-modal-bio { margin: 8px 0 12px; }
+.profile-modal-stats { display:flex; gap:16px; align-items:flex-start; }
+.profile-modal-stats .profile-head-link { display:flex; flex-direction:column; align-items:center; gap:6px; text-decoration:none; color:inherit; }
+.profile-modal-stats .profile-head-link svg { width:72px; height:72px; fill:#666; transition:fill .2s ease }
+.profile-modal-stats .profile-head-link:hover svg, .profile-modal-stats .profile-head-link:focus svg { fill:#222 }
+.profile-modal-stats .stat-row { display:flex; gap:6px; align-items:baseline; font-size:12px; }
+.profile-modal-stats .stat-count { font-weight:600; font-size:12px; }
+.profile-modal-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.profile-modal-tabs .profile-tab { padding: 6px 10px; border: 1px solid #ddd; background:#fff; border-radius: 4px; cursor: pointer; }
+.profile-modal-tabs .profile-tab:hover { background: #f5f5f5; }
+.loading { padding: 12px; color: #666; }
+
+/* Auth view */
+.auth-modal-content { padding: 16px; }
+.auth-modal-content h2 { margin-top: 0; }
+.auth-login-form label { display:block; margin: 8px 0; }
+.auth-login-form input[type="text"],
+.auth-login-form input[type="password"] { width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; }
+.auth-login-form .button { margin-top:10px; }
+.auth-secondary { margin-top: 8px; display:flex; gap:12px; }
+
+/* Profile header stats: 3 items in one row */
+.profile-header-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 0;
+
+}
+
+/* Make each item a block and center contents */
+.profile-header-stats .profile-head-link {
+  display: inline-flex;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+	margin-right: 20px;
+}
+
+/* Stack label over number inside each item */
+.profile-header-stats .stat-stack {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* Number first, bold; label second, grey */
+.profile-header-stats .stat-count { order: 0; font-weight: 600; }
+.profile-header-stats .stat-label { order: 1; color: #666; text-transform: lowercase; }
+
+/* Hide header stats in Edit Profile view */
+#universal-modal.is-profile-edit .profile-header-stats { display: none; }

@@ -1,0 +1,6 @@
+.author-url-link{display:inline-flex;align-items:center;gap:15px;text-decoration:none;color:#0073aa}
+.author-url-link:hover,.author-url-link:focus{color:#005177;text-decoration:underline}
+.author-url-link .author-url-icon{display:inline-flex;width:20px;height:20px}
+.author-url-link .author-url-icon svg{width:20px;height:20px;display:block}
+.author-url-link .author-url-text{line-height:1}
+

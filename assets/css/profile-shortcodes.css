@@ -1,0 +1,57 @@
+.photographer-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--wp--style--block-gap, 12px);
+}
+.photographer-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+.photographer-stat .label { display: block; }
+.photographer-stat .count { display: block; font-weight: 600; }
+
+.sml-flw {
+	text-align: right;
+}
+
+
+/* Small inline follow button used by [follow_button_small] */
+.wp-block-button__link.wp-element-button.follow-author-btn.is-small {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px;
+	font-size: 0.65rem;
+	line-height: 1;
+	border-radius: 3px;
+}
+.follow-author-btn.is-small .follow-label {
+	min-width: auto;
+	font-weight: 400;
+}
+.wp-block-button__link.wp-element-button.follow-author-btn.is-small.is-following {
+	background-color: #198754;
+	color: #fff;
+}
+
+/* Ensure small button beats block theme defaults */
+.wp-block-button__link.wp-element-button.follow-author-btn.is-small {
+	min-height: 0 !important;
+	height: auto !important;
+	padding: 4px 8px !important;
+	font-size: 0.85rem !important;
+	line-height: 1.1 !important;
+}
+
+/* If wrapped by Buttons block, override those defaults too */
+.wp-block-buttons .wp-block-button .wp-block-button__link.follow-author-btn.is-small {
+	min-height: 0 !important;
+	height: auto !important;
+	padding: 4px 8px !important;
+	font-size: 0.85rem !important;
+	line-height: 1.1 !important;
+}
+
+/* removed inline-meta--follow-right flex rules (reverted) */
