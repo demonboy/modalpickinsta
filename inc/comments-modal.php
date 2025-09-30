@@ -94,7 +94,23 @@ function auto_enable_comment_cookies($fields) {
 }
 
 function render_comment_with_replies($comment) {
-    $avatar = get_avatar($comment->comment_author_email, 40);
+    // Check if comment was soft-deleted
+    $is_soft_deleted = get_comment_meta($comment->comment_ID, '_comment_soft_deleted', true);
+    
+    // Use grey circle for soft-deleted comments, otherwise normal avatar
+    if ($is_soft_deleted) {
+        $avatar = '<div class="comment-avatar-deleted"></div>';
+    } else {
+        $avatar = get_avatar($comment->comment_author_email, 40);
+    }
+    
+    // Use "Comment deleted" for soft-deleted comments, otherwise normal content
+    if ($is_soft_deleted) {
+        $comment_display_text = '<em>Comment deleted</em>';
+    } else {
+        $comment_display_text = esc_html($comment->comment_content);
+    }
+    
     $profile_url = get_author_posts_url($comment->user_id);
     $comment_time = human_time_diff(strtotime($comment->comment_date), current_time('timestamp'));
     
@@ -138,7 +154,7 @@ function render_comment_with_replies($comment) {
         $html .= '<div class="reply-avatar"><a href="' . esc_url($profile_url) . '">' . $avatar . '</a></div>';
         $html .= '<div class="reply-content">';
         $html .= '<div class="reply-author"><a href="' . esc_url($profile_url) . '">' . esc_html($comment->comment_author) . '</a> <span class="reply-time">' . $comment_time . ' ago</span></div>';
-        $html .= '<div class="reply-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . esc_html($comment->comment_content) . '</div>';
+        $html .= '<div class="reply-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . $comment_display_text . '</div>';
         
         // Action wrapper for like button and three-dot menu
         $html .= '<div class="comment-actions-wrapper">';
@@ -176,7 +192,7 @@ function render_comment_with_replies($comment) {
         $html .= '<div class="comment-avatar"><a href="' . esc_url($profile_url) . '">' . $avatar . '</a></div>';
         $html .= '<div class="comment-content">';
         $html .= '<div class="comment-author"><a href="' . esc_url($profile_url) . '">' . esc_html($comment->comment_author) . '</a> <span class="comment-time">' . $comment_time . ' ago</span></div>';
-        $html .= '<div class="comment-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . esc_html($comment->comment_content) . '</div>';
+        $html .= '<div class="comment-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . $comment_display_text . '</div>';
         $html .= '<div class="comment-reply-wrapper">';
         $like_button_class = $user_has_liked ? 'like-button liked' : 'like-button';
         $html .= $debug_info; // Add debug info
@@ -256,7 +272,8 @@ function handle_ajax_comment() {
         'comment_author' => wp_get_current_user()->display_name,
         'comment_author_email' => wp_get_current_user()->user_email,
         'comment_approved' => 1,
-        'comment_parent' => $comment_parent
+        'comment_parent' => $comment_parent,
+        'user_id' => get_current_user_id()
     );
     
     $comment_id = wp_insert_comment($comment_data);
@@ -477,23 +494,101 @@ function handle_delete_comment() {
     }
     
     $current_user_id = get_current_user_id();
+    $is_admin = current_user_can('moderate_comments');
+    $is_owner = ($comment->user_id == $current_user_id);
     
     // Check permissions
-    if ($comment->user_id != $current_user_id && !current_user_can('moderate_comments')) {
+    if (!$is_owner && !$is_admin) {
         wp_send_json_error('Permission denied');
         return;
     }
     
-    // Delete comment (moves to trash)
-    $result = wp_delete_comment($comment_id, false);
+    $post_id = $comment->comment_post_ID;
+    $is_reply = ($comment->comment_parent > 0);
     
-    if ($result) {
-        wp_send_json_success([
-            'message' => 'Comment deleted',
-            'post_id' => $comment->comment_post_ID
+    // Count replies to this comment
+    $replies = get_comments([
+        'parent' => $comment_id,
+        'count' => true,
+        'status' => 'approve'
+    ]);
+    $reply_count = (int) $replies;
+    
+    // SCENARIO 1: Admin deletes - always force delete everything
+    if ($is_admin) {
+        // Get all reply IDs to delete them manually (wp_delete_comment doesn't cascade)
+        $reply_ids = get_comments([
+            'parent' => $comment_id,
+            'status' => 'approve',
+            'fields' => 'ids'
         ]);
-    } else {
-        wp_send_json_error('Failed to delete comment');
+        
+        // Delete all replies first
+        $deleted_count = 0;
+        foreach ($reply_ids as $reply_id) {
+            if (wp_delete_comment($reply_id, true)) {
+                $deleted_count++;
+            }
+        }
+        
+        // Then delete the parent comment
+        $result = wp_delete_comment($comment_id, true);
+        
+        if ($result) {
+            $deleted_count++; // Add parent to count
+            wp_send_json_success([
+                'message' => 'Comment deleted',
+                'post_id' => $post_id,
+                'deleted' => $deleted_count,
+                'soft_deleted' => false
+            ]);
+        } else {
+            wp_send_json_error('Failed to delete comment');
+        }
+        return;
     }
+    
+    // SCENARIO 2 & 4: User deletes own reply OR comment with no replies - full delete
+    if ($is_reply || $reply_count == 0) {
+        $result = wp_delete_comment($comment_id, true); // Force delete
+        
+        if ($result) {
+            wp_send_json_success([
+                'message' => 'Comment deleted',
+                'post_id' => $post_id,
+                'deleted' => 1,
+                'soft_deleted' => false
+            ]);
+        } else {
+            wp_send_json_error('Failed to delete comment');
+        }
+        return;
+    }
+    
+    // SCENARIO 3: User deletes own parent comment that has replies - soft delete
+    if ($is_owner && !$is_reply && $reply_count > 0) {
+        $result = wp_update_comment([
+            'comment_ID' => $comment_id,
+            'comment_content' => '[deleted]',
+            'comment_author' => '---'
+        ]);
+        
+        if ($result) {
+            // Add meta flag to indicate this was soft-deleted
+            add_comment_meta($comment_id, '_comment_soft_deleted', '1', true);
+            
+            wp_send_json_success([
+                'message' => 'Comment deleted',
+                'post_id' => $post_id,
+                'deleted' => 0,
+                'soft_deleted' => true
+            ]);
+        } else {
+            wp_send_json_error('Failed to delete comment');
+        }
+        return;
+    }
+    
+    wp_send_json_error('Unable to process delete request');
 }
 

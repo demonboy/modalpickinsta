@@ -272,6 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
           updateCommentCount(postId);
           // Immediately reflect filled state on the comment icon for this post
           setCommentIconFilled(postId);
+          // Update latest comment display on page
+          if (window.updateLatestComment) {
+            window.updateLatestComment(postId);
+          }
         }
       });
     }
@@ -375,6 +379,10 @@ document.addEventListener('DOMContentLoaded', () => {
               updateCommentCount(postId);
               // Immediately reflect filled state on the comment icon for this post
               setCommentIconFilled(postId);
+              // Update latest comment display on page
+              if (window.updateLatestComment) {
+                window.updateLatestComment(postId);
+              }
             }
           });
         }
@@ -539,11 +547,27 @@ document.addEventListener('DOMContentLoaded', () => {
       // Check if confirmation already exists
       if (commentItem.querySelector('.comment-delete-confirm')) return;
       
+      // Count replies for confirmation message
+      const repliesContainer = commentItem.querySelector('.comment-replies');
+      let replyCount = 0;
+      let confirmText = 'Delete this comment?';
+      
+      // Only show reply count for admins (they actually delete replies)
+      // Non-admins do soft-delete and replies remain
+      if (repliesContainer && comments_modal_data && comments_modal_data.is_admin) {
+        const replyItems = repliesContainer.querySelectorAll('.reply-item');
+        replyCount = replyItems.length;
+        
+        if (replyCount > 0) {
+          confirmText = `Delete this comment and ${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}?`;
+        }
+      }
+      
       // Create confirmation UI
       const confirmDiv = document.createElement('div');
       confirmDiv.className = 'comment-delete-confirm';
       confirmDiv.innerHTML = `
-        <span>Delete this comment?</span>
+        <span>${confirmText}</span>
         <button class="comment-delete-no">Cancel</button>
         <button class="comment-delete-yes" data-comment-id="${commentId}">Delete</button>
       `;
@@ -583,17 +607,71 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          // Remove comment from DOM
+          const postId = data.data.post_id;
           const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
-          if (commentItem) {
+          
+          if (!commentItem) return;
+          
+          // SOFT DELETE - Replace content but keep structure
+          if (data.data.soft_deleted) {
+            // Remove confirmation
+            if (confirmDiv) confirmDiv.remove();
+            
+            // Replace avatar with grey circle
+            const avatarEl = commentItem.querySelector('.comment-avatar img');
+            if (avatarEl) {
+              avatarEl.replaceWith(createGreyCircle());
+            }
+            
+            // Replace username with "---"
+            const authorEl = commentItem.querySelector('.comment-author a');
+            if (authorEl) {
+              authorEl.textContent = '---';
+              authorEl.removeAttribute('href');
+              authorEl.style.cursor = 'default';
+            }
+            
+            // Replace comment text with italics
+            const textEl = commentItem.querySelector('.comment-text') || commentItem.querySelector('.reply-text');
+            if (textEl) {
+              textEl.innerHTML = '<em>Comment deleted</em>';
+            }
+            
+            // Remove three-dot menu
+            const optionsMenu = commentItem.querySelector('.comment-options');
+            if (optionsMenu) optionsMenu.remove();
+            
+            // Count stays the same - no update needed
+          } 
+          // HARD DELETE - Remove from DOM
+          else if (data.data.deleted > 0) {
             commentItem.style.opacity = '0';
             commentItem.style.transition = 'opacity 0.3s ease';
+            
+            // Also fade out the replies wrapper if it exists (sibling element)
+            const repliesWrapper = commentItem.nextElementSibling;
+            if (repliesWrapper && repliesWrapper.classList.contains('comment-replies-wrapper')) {
+              repliesWrapper.style.opacity = '0';
+              repliesWrapper.style.transition = 'opacity 0.3s ease';
+            }
+            
             setTimeout(() => {
+              // Remove parent comment
               commentItem.remove();
               
+              // Remove replies wrapper if it exists
+              if (repliesWrapper && repliesWrapper.classList.contains('comment-replies-wrapper')) {
+                repliesWrapper.remove();
+              }
+              
               // Update comment count
-              if (data.data.post_id) {
-                updateCommentCount(data.data.post_id);
+              if (postId) {
+                updateCommentCount(postId);
+              }
+              
+              // Update latest comment display
+              if (window.updateLatestComment) {
+                window.updateLatestComment(postId);
               }
             }, 300);
           }
@@ -610,6 +688,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
+  
+  // Helper function to create grey circle for deleted avatar
+  function createGreyCircle() {
+    const circle = document.createElement('div');
+    circle.className = 'comment-avatar-deleted';
+    circle.style.width = '30px';
+    circle.style.height = '30px';
+    circle.style.borderRadius = '50%';
+    circle.style.backgroundColor = '#ccc';
+    circle.style.flexShrink = '0';
+    return circle;
+  }
 
   // SHARE COMMENT
   document.body.addEventListener('click', function(e) {

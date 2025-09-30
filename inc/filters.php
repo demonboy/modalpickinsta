@@ -21,7 +21,7 @@ add_filter('get_the_archive_title', function($title) {
 // Removed byline label injection to keep post meta minimal (no "Photographer:" prefix)
 
 
-// Reorder tags globally so "constructive feedback" appears first when present (front-end only)
+// Hide "constructive feedback" tag from front-end display (kept in DB for filtering)
 add_filter( 'get_the_terms', function ( $terms, $post_id, $taxonomy ) {
     if ( is_admin() ) {
         return $terms;
@@ -31,25 +31,18 @@ add_filter( 'get_the_terms', function ( $terms, $post_id, $taxonomy ) {
         return $terms;
     }
 
-    $priority_slugs = array( 'constructive-feedback' );
-    $priority_names = array( 'constructive feedback' );
+    $hidden_slugs = array( 'constructive-feedback' );
+    $hidden_names = array( 'constructive feedback' );
 
-    $priority = array();
-    $others   = array();
-
+    // Filter out the constructive feedback tag
+    $filtered = array();
     foreach ( $terms as $term ) {
-        if ( in_array( $term->slug, $priority_slugs, true ) || in_array( strtolower( $term->name ), $priority_names, true ) ) {
-            $priority[] = $term;
-        } else {
-            $others[] = $term;
+        if ( ! in_array( $term->slug, $hidden_slugs, true ) && ! in_array( strtolower( $term->name ), $hidden_names, true ) ) {
+            $filtered[] = $term;
         }
     }
 
-    if ( empty( $priority ) ) {
-        return $terms;
-    }
-
-    return array_merge( $priority, $others );
+    return $filtered;
 }, 10, 3 );
 
 // Hide default category ("Uncategorized") across front-end term lists
@@ -204,4 +197,5 @@ add_filter( 'render_block', function( $block_content, $block ) {
 
 	return $block_content;
 }, 10, 2 );
+
 

@@ -59,26 +59,43 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .then(function(data) {
       if (data.success) {
-        // Find the specific latest comment display for this post
+        // Find the latest comment container for this post
+        // First, try to find existing display
+        let container = null;
+        let column = null;
+        
         const existingDisplay = document.querySelector('.latest-comment-display[data-post-id="' + postId + '"]');
         
         if (existingDisplay) {
-          // Found existing display for this post - update it
-          const container = existingDisplay.closest('.latest-comment');
-          const column = container ? container.querySelector('.wp-block-column') : null;
-          
-          if (column) {
-            if (data.data.has_comment) {
-              // Update the comment
-              column.innerHTML = data.data.html;
-              
-              // Hide the "Add a comment" block for this post
-              hideAddCommentBlock(postId);
-            } else {
-              // No comments, hide container and show "Add a comment" block
-              column.innerHTML = '';
-              showAddCommentBlock(postId);
+          // Found existing display - update it
+          container = existingDisplay.closest('.latest-comment');
+          column = container ? container.querySelector('.wp-block-column') : null;
+        } else {
+          // No existing display - this might be the first comment
+          // Find the "Add a comment" block for this post to locate the container
+          const addCommentBlock = document.querySelector('.comtrigfield[data-post-id="' + postId + '"]');
+          if (addCommentBlock) {
+            // Get the parent article or post container
+            const postContainer = addCommentBlock.closest('article') || addCommentBlock.closest('.wp-block-post');
+            if (postContainer) {
+              // Find the latest-comment container within this post
+              container = postContainer.querySelector('.latest-comment');
+              column = container ? container.querySelector('.wp-block-column') : null;
             }
+          }
+        }
+        
+        if (column) {
+          if (data.data.has_comment) {
+            // Update/add the comment
+            column.innerHTML = data.data.html;
+            
+            // Hide the "Add a comment" block for this post
+            hideAddCommentBlock(postId);
+          } else {
+            // No comments, clear container and show "Add a comment" block
+            column.innerHTML = '';
+            showAddCommentBlock(postId);
           }
         }
       }
@@ -87,6 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Error updating latest comment:', error);
     });
   }
+  
+  // Make updateLatestComment globally accessible
+  window.updateLatestComment = updateLatestComment;
   
   // Hide "Add a comment" block when latest comment exists
   function hideAddCommentBlock(postId) {

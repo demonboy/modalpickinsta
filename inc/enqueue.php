@@ -90,6 +90,11 @@ function enqueue_modal_js() {
         true
     );
     
+    // Pass user role info to comments modal JS
+    wp_localize_script('comments-modal-js', 'comments_modal_data', array(
+        'is_admin' => current_user_can('moderate_comments')
+    ));
+    
     // Keep global WordPress media UI disabled to avoid large template payload
     // wp_enqueue_media();
     // Re-enable ACF global enqueue to ensure field UIs (e.g., taxonomy selects) initialize reliably
