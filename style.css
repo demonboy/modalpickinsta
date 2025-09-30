@@ -652,6 +652,14 @@ figcaption {
 
 
 .wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt { margin-block-start: 0; }
+/* Ensure no extra flow spacing and prevent p-margin collapsing on excerpt row only */
+.wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt { margin-block-end: 0; display: flow-root; }
+.wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt > .wp-block-post-excerpt__excerpt { margin: 0; }
+/* Kill core flow top margin on the inline-meta excerpt row only */
+.wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt {
+	margin-block-start: 0 !important;
+	margin-top: 0 !important;
+}
 
 /*category and tagss immediately between image*/
 .inline-meta .wp-block-group.is-layout-flex {

@@ -188,6 +188,11 @@
       }
     } catch(err) {}
   });
+
+  // Expose open function globally for programmatic sharing
+  window.openShareModal = function(data) {
+    open(data);
+  };
 })();
 
 

@@ -1,0 +1,35 @@
+/* Latest comment display */
+.latest-comment-display {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.latest-comment-display:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.latest-comment-avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.latest-comment-text {
+  flex: 1;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .latest-comment-text {
+    font-size: 0.8125rem;
+  }
+}

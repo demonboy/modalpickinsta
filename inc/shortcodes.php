@@ -346,7 +346,7 @@ function hrphoto_comment_count_shortcode($atts){
     if ($post_id <= 0) { return '0'; }
 
     $count = get_comments_number($post_id);
-    return number_format_i18n($count);
+    return '<span class="comment-count-number" data-post-id="' . esc_attr($post_id) . '">' . number_format_i18n($count) . '</span>';
 }
 add_shortcode('comment_count', 'hrphoto_comment_count_shortcode');
 

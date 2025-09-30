@@ -126,35 +126,57 @@ function render_comment_with_replies($comment) {
         }
     }
     
+    // Check permissions for edit/delete
+    $current_user_id = get_current_user_id();
+    $can_edit = ($comment->user_id && $current_user_id == $comment->user_id) || current_user_can('moderate_comments');
+    
     // Check if this is a reply
     if ($comment->comment_parent > 0) {
         // Generate simpler HTML for replies
-        $html = '<div class="reply-item" id="comment-' . $comment->comment_ID . '">';
+        $html = '<div class="reply-item" id="comment-' . $comment->comment_ID . '" data-comment-id="' . $comment->comment_ID . '">';
         $html .= '<div class="reply-row">';
         $html .= '<div class="reply-avatar"><a href="' . esc_url($profile_url) . '">' . $avatar . '</a></div>';
         $html .= '<div class="reply-content">';
         $html .= '<div class="reply-author"><a href="' . esc_url($profile_url) . '">' . esc_html($comment->comment_author) . '</a> <span class="reply-time">' . $comment_time . ' ago</span></div>';
-        $html .= '<div class="reply-text">' . esc_html($comment->comment_content) . '</div>';
+        $html .= '<div class="reply-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . esc_html($comment->comment_content) . '</div>';
         
-        // Add like button to replies (inside reply-content)
+        // Action wrapper for like button and three-dot menu
+        $html .= '<div class="comment-actions-wrapper">';
+        
+        // Add like button to replies
         $like_button_class = $user_has_liked ? 'like-button liked' : 'like-button';
         $html .= $debug_info; // Add debug info
         $html .= '<button class="' . $like_button_class . '" data-post-id="' . $comment->comment_post_ID . '" data-comment-id="' . $comment->comment_ID . '">';
         $html .= '<span class="like-icon"></span>';
         $html .= $like_count > 0 ? '<span class="like-count">' . $like_count . '</span>' : '<span class="like-count"></span>';
         $html .= '</button>';
+        
+        // Three-dot menu
+        if ($can_edit) {
+            $html .= '<div class="comment-options">';
+            $html .= '<button class="comment-options-btn" data-comment-id="' . $comment->comment_ID . '" aria-label="Comment options">⋯</button>';
+            $html .= '<div class="comment-options-menu" style="display:none;">';
+            $html .= '<button class="comment-option-item edit-comment" data-comment-id="' . $comment->comment_ID . '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>';
+            $html .= '<button class="comment-option-item delete-comment" data-comment-id="' . $comment->comment_ID . '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>';
+            $html .= '<button class="comment-option-item share-comment" data-comment-id="' . $comment->comment_ID . '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</button>';
+            $html .= '<button class="comment-option-item report-comment" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Report</button>';
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+        
+        $html .= '</div>'; // close comment-actions-wrapper
         $html .= '</div>';
         $html .= '</div>';
         $html .= '</div>';
         return $html;
     } else {
         // Generate full HTML for top-level comments
-        $html = '<div class="comment-item" id="comment-' . $comment->comment_ID . '">';
+        $html = '<div class="comment-item" id="comment-' . $comment->comment_ID . '" data-comment-id="' . $comment->comment_ID . '">';
         $html .= '<div class="comment-row">';
         $html .= '<div class="comment-avatar"><a href="' . esc_url($profile_url) . '">' . $avatar . '</a></div>';
         $html .= '<div class="comment-content">';
         $html .= '<div class="comment-author"><a href="' . esc_url($profile_url) . '">' . esc_html($comment->comment_author) . '</a> <span class="comment-time">' . $comment_time . ' ago</span></div>';
-        $html .= '<div class="comment-text">' . esc_html($comment->comment_content) . '</div>';
+        $html .= '<div class="comment-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . esc_html($comment->comment_content) . '</div>';
         $html .= '<div class="comment-reply-wrapper">';
         $like_button_class = $user_has_liked ? 'like-button liked' : 'like-button';
         $html .= $debug_info; // Add debug info
@@ -163,6 +185,20 @@ function render_comment_with_replies($comment) {
         $html .= $like_count > 0 ? '<span class="like-count">' . $like_count . '</span>' : '<span class="like-count"></span>';
         $html .= '</button>';
         $html .= '<a href="#" class="comment-reply-link" data-comment-id="' . $comment->comment_ID . '">Reply</a>';
+        
+        // Three-dot menu for top-level comments
+        if ($can_edit) {
+            $html .= '<div class="comment-options">';
+            $html .= '<button class="comment-options-btn" data-comment-id="' . $comment->comment_ID . '" aria-label="Comment options">⋯</button>';
+            $html .= '<div class="comment-options-menu" style="display:none;">';
+            $html .= '<button class="comment-option-item edit-comment" data-comment-id="' . $comment->comment_ID . '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>';
+            $html .= '<button class="comment-option-item delete-comment" data-comment-id="' . $comment->comment_ID . '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>';
+            $html .= '<button class="comment-option-item share-comment" data-comment-id="' . $comment->comment_ID . '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</button>';
+            $html .= '<button class="comment-option-item report-comment" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Report</button>';
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+        
         $html .= '</div>';
         
         // Reply form
@@ -366,5 +402,98 @@ function handle_toggle_like() {
         'liked' => $liked,
         'count' => $count
     ]);
+}
+
+// AJAX handler for editing comments
+add_action('wp_ajax_edit_comment', 'handle_edit_comment');
+add_action('wp_ajax_nopriv_edit_comment', 'handle_edit_comment');
+
+function handle_edit_comment() {
+    if (!wp_verify_nonce($_POST['nonce'], 'ajax_nonce')) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Must be logged in');
+        return;
+    }
+    
+    $comment_id = intval($_POST['comment_id']);
+    $new_content = sanitize_textarea_field($_POST['comment_content']);
+    
+    $comment = get_comment($comment_id);
+    
+    if (!$comment) {
+        wp_send_json_error('Comment not found');
+        return;
+    }
+    
+    $current_user_id = get_current_user_id();
+    
+    // Check permissions
+    if ($comment->user_id != $current_user_id && !current_user_can('moderate_comments')) {
+        wp_send_json_error('Permission denied');
+        return;
+    }
+    
+    // Update comment
+    $result = wp_update_comment([
+        'comment_ID' => $comment_id,
+        'comment_content' => $new_content
+    ]);
+    
+    if ($result) {
+        wp_send_json_success([
+            'message' => 'Comment updated',
+            'content' => esc_html($new_content)
+        ]);
+    } else {
+        wp_send_json_error('Failed to update comment');
+    }
+}
+
+// AJAX handler for deleting comments
+add_action('wp_ajax_delete_comment', 'handle_delete_comment');
+add_action('wp_ajax_nopriv_delete_comment', 'handle_delete_comment');
+
+function handle_delete_comment() {
+    if (!wp_verify_nonce($_POST['nonce'], 'ajax_nonce')) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+    
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Must be logged in');
+        return;
+    }
+    
+    $comment_id = intval($_POST['comment_id']);
+    $comment = get_comment($comment_id);
+    
+    if (!$comment) {
+        wp_send_json_error('Comment not found');
+        return;
+    }
+    
+    $current_user_id = get_current_user_id();
+    
+    // Check permissions
+    if ($comment->user_id != $current_user_id && !current_user_can('moderate_comments')) {
+        wp_send_json_error('Permission denied');
+        return;
+    }
+    
+    // Delete comment (moves to trash)
+    $result = wp_delete_comment($comment_id, false);
+    
+    if ($result) {
+        wp_send_json_success([
+            'message' => 'Comment deleted',
+            'post_id' => $comment->comment_post_ID
+        ]);
+    } else {
+        wp_send_json_error('Failed to delete comment');
+    }
 }
 

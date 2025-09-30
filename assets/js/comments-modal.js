@@ -81,35 +81,55 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
+  
+  // Make function globally accessible
+  window.loadCommentsModal = loadCommentsModal;
 
   // Update comment count function
   function updateCommentCount(postId) {
-    // Find all comment icons for this post
-    const commentIcons = document.querySelectorAll(`[data-post-id="${postId}"]`);
-    
-    commentIcons.forEach(icon => {
-      const countSpan = icon.querySelector('.comment-count');
-      if (countSpan) {
-        // Get updated count from AJAX endpoint
-        fetch('/wp-admin/admin-ajax.php', {
-          method: 'POST',
-          body: new URLSearchParams({
-            action: 'get_comments_modal',
-            post_id: postId,
-            nonce: post_likes_ajax.nonce
-          })
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              countSpan.textContent = data.data.count;
+    // Get updated count from AJAX endpoint
+    fetch('/wp-admin/admin-ajax.php', {
+      method: 'POST',
+      body: new URLSearchParams({
+        action: 'get_comments_modal',
+        post_id: postId,
+        nonce: post_likes_ajax.nonce
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const newCount = data.data.count;
+          
+          // Update comment icons on the page
+          const commentIcons = document.querySelectorAll(`[data-post-id="${postId}"]`);
+          commentIcons.forEach(icon => {
+            const countSpan = icon.querySelector('.comment-count');
+            if (countSpan) {
+              countSpan.textContent = newCount;
             }
-          })
-          .catch(error => {
-            console.log('Error updating comment count:', error);
           });
-      }
-    });
+          
+          // Update [comment_count] shortcodes for this post
+          const commentCountShortcodes = document.querySelectorAll(`.comment-count-number[data-post-id="${postId}"]`);
+          commentCountShortcodes.forEach(shortcode => {
+            shortcode.textContent = newCount;
+          });
+          
+          // Update modal header count (if modal is open for this post)
+          const modal = document.getElementById('universal-modal');
+          if (modal && modal.getAttribute('data-post-id') === postId) {
+            const modalHeader = modal.querySelector('.modal-body h2');
+            if (modalHeader) {
+              // Replace the count in "Comments (X)" format
+              modalHeader.textContent = modalHeader.textContent.replace(/\(\d+\)/, '(' + newCount + ')');
+            }
+          }
+        }
+      })
+      .catch(error => {
+        console.log('Error updating comment count:', error);
+      });
   }
 
   // Pre-populate data-post-id on fake comment fields if missing (from nearest article)
@@ -361,4 +381,390 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // THREE-DOT MENU - Toggle menu
+  document.body.addEventListener('click', function(e) {
+    const optionsBtn = e.target.closest('.comment-options-btn');
+    
+    if (optionsBtn) {
+      e.stopPropagation();
+      const menu = optionsBtn.nextElementSibling;
+      const isVisible = menu.style.display === 'block';
+      
+      // Close all other menus first
+      document.querySelectorAll('.comment-options-menu').forEach(m => m.style.display = 'none');
+      
+      // Toggle this menu
+      menu.style.display = isVisible ? 'none' : 'block';
+    } else {
+      // Click outside - close all menus
+      if (!e.target.closest('.comment-options-menu')) {
+        document.querySelectorAll('.comment-options-menu').forEach(m => m.style.display = 'none');
+      }
+    }
+  });
+
+  // EDIT COMMENT
+  document.body.addEventListener('click', function(e) {
+    if (e.target.closest('.edit-comment')) {
+      const btn = e.target.closest('.edit-comment');
+      const commentId = btn.getAttribute('data-comment-id');
+      const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+      
+      if (!commentItem) return;
+      
+      // Find comment text element (either .comment-text or .reply-text)
+      const textEl = commentItem.querySelector('.comment-text') || commentItem.querySelector('.reply-text');
+      if (!textEl) return;
+      
+      const originalText = textEl.getAttribute('data-original-text');
+      
+      // Close menu
+      const menu = btn.closest('.comment-options-menu');
+      if (menu) menu.style.display = 'none';
+      
+      // Replace text with textarea
+      const editForm = document.createElement('div');
+      editForm.className = 'comment-edit-form';
+      editForm.innerHTML = `
+        <textarea class="comment-edit-textarea">${originalText}</textarea>
+        <div class="comment-edit-actions">
+          <button class="comment-edit-save" data-comment-id="${commentId}">Save</button>
+          <button class="comment-edit-cancel">Cancel</button>
+        </div>
+      `;
+      
+      textEl.style.display = 'none';
+      textEl.insertAdjacentElement('afterend', editForm);
+      
+      // Focus textarea
+      const textarea = editForm.querySelector('textarea');
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+  });
+
+  // SAVE EDIT
+  document.body.addEventListener('click', function(e) {
+    if (e.target.classList.contains('comment-edit-save')) {
+      const btn = e.target;
+      const commentId = btn.getAttribute('data-comment-id');
+      const form = btn.closest('.comment-edit-form');
+      const textarea = form.querySelector('textarea');
+      const newContent = textarea.value.trim();
+      
+      if (!newContent) {
+        alert('Comment cannot be empty');
+        return;
+      }
+      
+      // Disable button
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      
+      // Send AJAX request
+      fetch('/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        body: new URLSearchParams({
+          action: 'edit_comment',
+          comment_id: commentId,
+          comment_content: newContent,
+          nonce: post_likes_ajax.nonce
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update comment text
+          const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+          const textEl = commentItem.querySelector('.comment-text') || commentItem.querySelector('.reply-text');
+          
+          textEl.textContent = data.data.content;
+          textEl.setAttribute('data-original-text', newContent);
+          textEl.style.display = '';
+          
+          // Add "Edited" indicator if not already there
+          const timeEl = commentItem.querySelector('.comment-time') || commentItem.querySelector('.reply-time');
+          if (timeEl && !timeEl.querySelector('.comment-edited')) {
+            const editedSpan = document.createElement('span');
+            editedSpan.className = 'comment-edited';
+            editedSpan.textContent = '(Edited)';
+            timeEl.appendChild(editedSpan);
+          }
+          
+          // Remove edit form
+          form.remove();
+        } else {
+          alert('Failed to update comment: ' + (data.data || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = 'Save';
+        }
+      })
+      .catch(error => {
+        alert('Error updating comment');
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      });
+    }
+  });
+
+  // CANCEL EDIT
+  document.body.addEventListener('click', function(e) {
+    if (e.target.classList.contains('comment-edit-cancel')) {
+      const form = e.target.closest('.comment-edit-form');
+      const textEl = form.previousElementSibling;
+      
+      textEl.style.display = '';
+      form.remove();
+    }
+  });
+
+  // DELETE COMMENT
+  document.body.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-comment')) {
+      const btn = e.target.closest('.delete-comment');
+      const commentId = btn.getAttribute('data-comment-id');
+      const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+      
+      if (!commentItem) return;
+      
+      // Close menu
+      const menu = btn.closest('.comment-options-menu');
+      if (menu) menu.style.display = 'none';
+      
+      // Find where to insert confirmation (after text)
+      const textEl = commentItem.querySelector('.comment-text') || commentItem.querySelector('.reply-text');
+      if (!textEl) return;
+      
+      // Check if confirmation already exists
+      if (commentItem.querySelector('.comment-delete-confirm')) return;
+      
+      // Create confirmation UI
+      const confirmDiv = document.createElement('div');
+      confirmDiv.className = 'comment-delete-confirm';
+      confirmDiv.innerHTML = `
+        <span>Delete this comment?</span>
+        <button class="comment-delete-no">Cancel</button>
+        <button class="comment-delete-yes" data-comment-id="${commentId}">Delete</button>
+      `;
+      
+      textEl.insertAdjacentElement('afterend', confirmDiv);
+    }
+  });
+
+  // CANCEL DELETE
+  document.body.addEventListener('click', function(e) {
+    if (e.target.classList.contains('comment-delete-no')) {
+      const confirmDiv = e.target.closest('.comment-delete-confirm');
+      if (confirmDiv) confirmDiv.remove();
+    }
+  });
+
+  // CONFIRM DELETE
+  document.body.addEventListener('click', function(e) {
+    if (e.target.classList.contains('comment-delete-yes')) {
+      const btn = e.target;
+      const commentId = btn.getAttribute('data-comment-id');
+      const confirmDiv = btn.closest('.comment-delete-confirm');
+      
+      // Disable buttons
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+      
+      // Send AJAX request
+      fetch('/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        body: new URLSearchParams({
+          action: 'delete_comment',
+          comment_id: commentId,
+          nonce: post_likes_ajax.nonce
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Remove comment from DOM
+          const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+          if (commentItem) {
+            commentItem.style.opacity = '0';
+            commentItem.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+              commentItem.remove();
+              
+              // Update comment count
+              if (data.data.post_id) {
+                updateCommentCount(data.data.post_id);
+              }
+            }, 300);
+          }
+        } else {
+          alert('Failed to delete comment: ' + (data.data || 'Unknown error'));
+          btn.disabled = false;
+          btn.textContent = 'Delete';
+        }
+      })
+      .catch(error => {
+        alert('Error deleting comment');
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+      });
+    }
+  });
+
+  // SHARE COMMENT
+  document.body.addEventListener('click', function(e) {
+    if (e.target.closest('.share-comment')) {
+      const btn = e.target.closest('.share-comment');
+      const commentId = btn.getAttribute('data-comment-id');
+      
+      // Build comment URL with hash
+      const baseUrl = window.location.origin + window.location.pathname;
+      const commentUrl = baseUrl + '#comment-' + commentId;
+      
+      // Get comment text for title
+      const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`);
+      const textEl = commentItem ? (commentItem.querySelector('.comment-text') || commentItem.querySelector('.reply-text')) : null;
+      const commentText = textEl ? textEl.textContent.substring(0, 100) : 'Comment';
+      const shareTitle = 'Comment: ' + commentText + (commentText.length >= 100 ? '...' : '');
+      
+      // Close menu
+      const menu = btn.closest('.comment-options-menu');
+      if (menu) menu.style.display = 'none';
+      
+      // Trigger share modal with comment URL
+      if (window.openShareModal) {
+        window.openShareModal({
+          type: 'comment',
+          url: commentUrl,
+          title: shareTitle
+        });
+      } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(commentUrl).then(() => {
+          alert('Comment link copied to clipboard!');
+        }).catch(() => {
+          prompt('Copy this link:', commentUrl);
+        });
+      }
+    }
+  });
+
+  // CHECK FOR COMMENT HASH ON PAGE LOAD
+  function checkForCommentHash() {
+    const hash = window.location.hash;
+    console.log('Checking hash:', hash);
+    
+    if (hash && hash.startsWith('#comment-')) {
+      const commentId = hash.replace('#comment-', '');
+      console.log('Comment ID detected:', commentId);
+      
+      // Get post ID from multiple sources
+      let postId = null;
+      
+      // Method 1: Try article with data-post-id
+      const article = document.querySelector('article[data-post-id]');
+      if (article) {
+        postId = article.getAttribute('data-post-id');
+        console.log('Post ID from article:', postId);
+      }
+      
+      // Method 2: Try comment icon
+      if (!postId) {
+        const commentIcon = document.querySelector('.comment-icon[data-post-id]');
+        if (commentIcon) {
+          postId = commentIcon.getAttribute('data-post-id');
+          console.log('Post ID from comment icon:', postId);
+        }
+      }
+      
+      // Method 3: Try body class postid-123
+      if (!postId) {
+        const bodyClasses = document.body.className;
+        const match = bodyClasses.match(/postid-(\d+)/);
+        if (match) {
+          postId = match[1];
+          console.log('Post ID from body class:', postId);
+        }
+      }
+      
+      // Method 4: Try .wp-block-post with post-123 class
+      if (!postId) {
+        const wpPost = document.querySelector('.wp-block-post[class*="post-"]');
+        if (wpPost) {
+          const classMatch = wpPost.className.match(/\bpost-(\d+)\b/);
+          if (classMatch) {
+            postId = classMatch[1];
+            console.log('Post ID from wp-block-post:', postId);
+          }
+        }
+      }
+      
+      // Method 5: Extract from URL path (last resort)
+      if (!postId) {
+        // Try to get post by slug from URL and use AJAX
+        console.log('Could not detect post ID from DOM, attempting URL-based detection');
+      }
+      
+      if (postId) {
+        console.log('Opening comments modal for post:', postId);
+        // Open comments modal
+        loadCommentsModal(postId);
+        
+        // After modal opens, scroll to and highlight comment
+        setTimeout(() => {
+          highlightComment(commentId);
+        }, 800);
+      } else {
+        console.error('Could not detect post ID for comment:', commentId);
+      }
+    }
+  }
+
+  // HIGHLIGHT COMMENT FUNCTION
+  function highlightComment(commentId) {
+    const commentItem = document.querySelector(`#comment-${commentId}`);
+    
+    if (!commentItem) return;
+    
+    // If it's a reply, expand parent comment first
+    const parentReply = commentItem.closest('.comment-replies');
+    if (parentReply) {
+      const repliesContent = parentReply.querySelector('.replies-content');
+      const repliesToggle = parentReply.querySelector('.replies-toggle');
+      if (repliesContent && repliesToggle) {
+        repliesContent.style.display = 'block';
+        repliesToggle.classList.add('expanded');
+      }
+    }
+    
+    // Scroll to comment
+    setTimeout(() => {
+      commentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Add highlight class
+      commentItem.classList.add('comment-highlighted');
+      
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        commentItem.classList.remove('comment-highlighted');
+      }, 3000);
+    }, 300);
+  }
+
+  // Run check on page load - try multiple times to ensure DOM is ready
+  function initHashCheck() {
+    checkForCommentHash();
+    // Also check after a delay in case DOM isn't fully loaded
+    setTimeout(checkForCommentHash, 100);
+    setTimeout(checkForCommentHash, 500);
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHashCheck);
+  } else {
+    initHashCheck();
+  }
+  
+  // Also check when hash changes (back/forward navigation)
+  window.addEventListener('hashchange', checkForCommentHash);
 });

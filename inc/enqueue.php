@@ -407,6 +407,23 @@ add_action('wp_enqueue_scripts', function(){
     );
 });
 
+// LATEST COMMENT (query loop display with real-time updates)
+add_action('wp_enqueue_scripts', function(){
+    wp_enqueue_style(
+        'latest-comment-css',
+        get_stylesheet_directory_uri() . '/assets/css/latest-comment.css',
+        array('1hrphoto-style'),
+        filemtime(get_stylesheet_directory() . '/assets/css/latest-comment.css')
+    );
+    wp_enqueue_script(
+        'latest-comment-js',
+        get_stylesheet_directory_uri() . '/assets/js/latest-comment.js',
+        array('post-likes-js'),
+        filemtime(get_stylesheet_directory() . '/assets/js/latest-comment.js'),
+        true
+    );
+});
+
 // Enqueue author profile URL CSS only on author pages (lean)
 add_action('wp_enqueue_scripts', function(){
 	if (is_author()) {
