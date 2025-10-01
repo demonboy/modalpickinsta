@@ -253,6 +253,21 @@ function enqueue_modal_js() {
         ),
     ));
 
+    // Critique modal (standalone floating modal)
+    wp_enqueue_script(
+        'critique-modal-js',
+        get_stylesheet_directory_uri() . '/assets/js/critique-modal.js',
+        array('post-likes-js'),
+        filemtime(get_stylesheet_directory() . '/assets/js/critique-modal.js'),
+        true
+    );
+    wp_enqueue_style(
+        'critique-modal-css',
+        get_stylesheet_directory_uri() . '/assets/css/critique-modal.css',
+        array('1hrphoto-style'),
+        filemtime(get_stylesheet_directory() . '/assets/css/critique-modal.css')
+    );
+
     // Feed settings modal assets
     wp_enqueue_script(
         'feed-modal-js',

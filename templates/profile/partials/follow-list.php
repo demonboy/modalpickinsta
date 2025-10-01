@@ -29,7 +29,7 @@ foreach ($rows as $r) {
           . '<div class="follow-user-meta"><div class="follow-name"><a href="' . esc_url($url) . '" data-no-profile-modal>' . $name . '</a></div>';
     if ($genre) { echo '<div class="follow-genre">' . esc_html($genre) . '</div>'; }
     echo '  </div></div>';
-    echo '  <div class="follow-actions">' . do_shortcode('[follow_author author_id="' . $uid . '"]') . '</div>';
+    echo '  <div class="follow-actions">' . do_shortcode('[follow_button_small user="' . $uid . '"]') . '</div>';
     echo '</div>';
 }
 

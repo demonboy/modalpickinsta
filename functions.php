@@ -22,6 +22,9 @@ require get_stylesheet_directory() . '/inc/comments-modal.php';
 /* LATEST COMMENT */
 require get_stylesheet_directory() . '/inc/latest-comment.php';
 
+/* CRITIQUE MODAL */
+require get_stylesheet_directory() . '/inc/critique-modal.php';
+
 /* POST CREATION MODAL */
 require get_stylesheet_directory() . '/inc/post-creation-modal.php';
 

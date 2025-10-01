@@ -726,7 +726,7 @@ body.modal-open {
     flex-direction: row;
     align-items: center;
     gap: 6px;
-    padding: 3px;
+    padding: 5px;
 }
 
 .critique-welcome-btn svg {
@@ -737,6 +737,36 @@ body.modal-open {
     color: #71717A;
     font-size: 14px;
     line-height: 1;
+}
+
+/* Critique button inline in comments modal text */
+#universal-modal .modal-body p .critique-welcome-btn-inline {
+    display: inline-flex;
+    vertical-align: middle;
+    margin: 0;
+    padding: 5px 5px 8px 5px;
+}
+
+/* CRITIQUE COMMENT STYLING */
+
+.critique-comment .comment-text {
+    background: #dcfce7; /* Light green background only on comment text */
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.critique-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+}
+
+.critique-badge svg {
+    vertical-align: middle;
+}
+
+.comment-spacer {
+    margin-bottom: 30px;
 }
 
 .like-icon {

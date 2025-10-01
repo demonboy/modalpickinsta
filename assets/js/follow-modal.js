@@ -226,7 +226,12 @@
     const optimisticFollowing = !currentlyFollowing;
     const statSel = '.profile-header-stats a.profile-head-link[data-section="followers"][data-user-id="' + String(authorId) + '"] .stat-count';
     document.querySelectorAll('.follow-author-btn[data-author-id="' + String(authorId) + '"]').forEach(function(el){
-      el.classList.toggle('is-following', optimisticFollowing);
+      // Always toggle the is-following class
+      if (optimisticFollowing) {
+        el.classList.add('is-following');
+      } else {
+        el.classList.remove('is-following');
+      }
       el.setAttribute('aria-pressed', optimisticFollowing ? 'true' : 'false');
       const label = el.querySelector && el.querySelector('.follow-label');
       if (label) {
@@ -257,12 +262,13 @@
         const newCount = (res.data && typeof res.data.followers_count === 'number') ? res.data.followers_count : null;
         // Update ALL follow buttons targeting this author
         document.querySelectorAll('.follow-author-btn[data-author-id="' + String(authorId) + '"]').forEach(function(el){
-          // Only reconcile if different from optimistic state to avoid flicker
-          const curFollowing = el.classList.contains('is-following');
-          if (curFollowing !== nowFollowing) {
-            el.classList.toggle('is-following', nowFollowing);
-            el.setAttribute('aria-pressed', nowFollowing ? 'true' : 'false');
+          // Always reconcile state from server
+          if (nowFollowing) {
+            el.classList.add('is-following');
+          } else {
+            el.classList.remove('is-following');
           }
+          el.setAttribute('aria-pressed', nowFollowing ? 'true' : 'false');
           // Only replace text for the text button variant (has core button classes)
           const label = el.querySelector && el.querySelector('.follow-label');
           if (label) {

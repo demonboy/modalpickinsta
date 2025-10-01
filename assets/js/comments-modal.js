@@ -43,7 +43,19 @@ document.addEventListener('DOMContentLoaded', () => {
           if (window.setActiveModal) { window.setActiveModal('comments'); }
 
           const dn = (data && data.data && data.data.author_display) ? String(data.data.author_display).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[s])) : '';
-          const note = (data && data.data && data.data.wants_cf) ? `<p>${dn} is looking for constructive feedback on their photography. Leave your thoughts below</p>` : '';
+          
+          // Create critique welcome button HTML (matching the shortcode output)
+          const critiqueBtn = data && data.data && data.data.wants_cf ? `<button class="critique-welcome-btn critique-welcome-btn-inline comment-icon" data-post-id="${postId}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.25 18L5.25 20.25V15.75H2.25C1.852 15.75 1.471 15.592 1.189 15.311C.908 15.029.75 14.648.75 14.25V2.25C.75 1.852.908 1.471 1.189 1.189C1.471.908 1.852.75 2.25.75H18.75C19.148.75 19.529.908 19.811 1.189C20.092 1.471 20.25 1.852 20.25 2.25V6.715" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5.25 5.25H15.75M5.25 9.75H8.25" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M23.25 18.75H20.25V23.25L15.75 18.75H11.25V9.75H23.25V18.75Z" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19.5 15H15" stroke="#71717A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="critique-welcome-text">Critique welcome</span>
+          </button>` : '';
+          
+          const note = (data && data.data && data.data.wants_cf) ? `<p>${dn} is looking for constructive feedback on this post. Use the ${critiqueBtn} button to submit your critique, otherwise leave your comment below.</p><p class="comment-spacer"></p>` : '';
           window.openModal(`<h2>Comments (${data.data.count})</h2>${note}${data.data.comments}`);
 
           // Cleanup: clear the active flag when the modal is closed via any route

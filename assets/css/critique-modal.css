@@ -1,0 +1,134 @@
+/* Critique Modal Styling */
+
+.critique-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+}
+
+.critique-modal.is-open {
+    display: block;
+}
+
+.critique-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+}
+
+.critique-dialog {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(500px, 90vw);
+    max-width: 90vw;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.critique-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.critique-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.critique-close {
+    background: none;
+    border: 0;
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.critique-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.critique-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.critique-textarea:focus {
+    outline: none;
+    border-color: #0b5fff;
+}
+
+.critique-counter {
+    font-size: 14px;
+    text-align: right;
+    margin-top: -8px;
+}
+
+.critique-counter.is-invalid {
+    color: #dc2626;
+}
+
+.critique-counter.is-valid {
+    color: #16a34a;
+}
+
+.critique-submit {
+    align-self: flex-end;
+    padding: 12px 24px;
+    background: #0b5fff;
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.critique-submit:hover:not(:disabled) {
+    background: #0847cc;
+}
+
+.critique-submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .critique-dialog {
+        width: 90vw;
+        max-width: 90vw;
+        padding: 20px;
+    }
+    
+    .critique-textarea {
+        min-height: 160px;
+    }
+}
+

@@ -146,9 +146,22 @@ function render_comment_with_replies($comment) {
     $current_user_id = get_current_user_id();
     $can_edit = ($comment->user_id && $current_user_id == $comment->user_id) || current_user_can('moderate_comments');
     
+    // Check if this is a critique comment
+    $is_critique = get_comment_meta($comment->comment_ID, '_is_critique', true);
+    $critique_badge = '';
+    if ($is_critique) {
+        // Same SVG as critique_welcome shortcode (20px)
+        $critique_badge = '<span class="critique-badge" title="Critique"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">'
+                        . '<path d="M8.25 18L5.25 20.25V15.75H2.25C1.852 15.75 1.471 15.592 1.189 15.311C.908 15.029.75 14.648.75 14.25V2.25C.75 1.852.908 1.471 1.189 1.189C1.471.908 1.852.75 2.25.75H18.75C19.148.75 19.529.908 19.811 1.189C20.092 1.471 20.25 1.852 20.25 2.25V6.715" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+                        . '<path d="M5.25 5.25H15.75M5.25 9.75H8.25" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+                        . '<path d="M23.25 18.75H20.25V23.25L15.75 18.75H11.25V9.75H23.25V18.75Z" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+                        . '<path d="M19.5 15H15" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+                        . '</svg></span>';
+    }
+    
     // Check if this is a reply
     if ($comment->comment_parent > 0) {
-        // Generate simpler HTML for replies
+        // Generate simpler HTML for replies (replies never get critique styling, only parent comments)
         $html = '<div class="reply-item" id="comment-' . $comment->comment_ID . '" data-comment-id="' . $comment->comment_ID . '">';
         $html .= '<div class="reply-row">';
         $html .= '<div class="reply-avatar"><a href="' . esc_url($profile_url) . '">' . $avatar . '</a></div>';
@@ -187,11 +200,12 @@ function render_comment_with_replies($comment) {
         return $html;
     } else {
         // Generate full HTML for top-level comments
-        $html = '<div class="comment-item" id="comment-' . $comment->comment_ID . '" data-comment-id="' . $comment->comment_ID . '">';
+        $comment_class = $is_critique ? 'comment-item critique-comment' : 'comment-item';
+        $html = '<div class="' . $comment_class . '" id="comment-' . $comment->comment_ID . '" data-comment-id="' . $comment->comment_ID . '">';
         $html .= '<div class="comment-row">';
         $html .= '<div class="comment-avatar"><a href="' . esc_url($profile_url) . '">' . $avatar . '</a></div>';
         $html .= '<div class="comment-content">';
-        $html .= '<div class="comment-author"><a href="' . esc_url($profile_url) . '">' . esc_html($comment->comment_author) . '</a> <span class="comment-time">' . $comment_time . ' ago</span></div>';
+        $html .= '<div class="comment-author"><a href="' . esc_url($profile_url) . '">' . esc_html($comment->comment_author) . '</a> ' . $critique_badge . ' <span class="comment-time">' . $comment_time . ' ago</span></div>';
         $html .= '<div class="comment-text" data-original-text="' . esc_attr($comment->comment_content) . '">' . $comment_display_text . '</div>';
         $html .= '<div class="comment-reply-wrapper">';
         $like_button_class = $user_has_liked ? 'like-button liked' : 'like-button';
@@ -505,6 +519,11 @@ function handle_delete_comment() {
     
     $post_id = $comment->comment_post_ID;
     $is_reply = ($comment->comment_parent > 0);
+    $post = get_post($post_id);
+    $post_author_id = $post ? $post->post_author : 0;
+    
+    // Check if this is a critique comment
+    $is_critique = get_comment_meta($comment_id, '_is_critique', true);
     
     // Count replies to this comment
     $replies = get_comments([
@@ -536,6 +555,40 @@ function handle_delete_comment() {
         
         if ($result) {
             $deleted_count++; // Add parent to count
+            
+            // If critique, decrement counters
+            if ($is_critique && $post_author_id > 0) {
+                // Decrement commenter's given count
+                $given_count = (int) get_user_meta($current_user_id, '_critiques_given_count', true);
+                $given_posts = get_user_meta($current_user_id, '_critiques_given_posts', true);
+                if (!is_array($given_posts)) {
+                    $given_posts = [];
+                }
+                
+                if ($given_count > 0) {
+                    update_user_meta($current_user_id, '_critiques_given_count', $given_count - 1);
+                }
+                if (($key = array_search($post_id, $given_posts)) !== false) {
+                    unset($given_posts[$key]);
+                    update_user_meta($current_user_id, '_critiques_given_posts', array_values($given_posts));
+                }
+                
+                // Decrement post author's received count
+                $received_count = (int) get_user_meta($post_author_id, '_critiques_received_count', true);
+                $received_posts = get_user_meta($post_author_id, '_critiques_received_posts', true);
+                if (!is_array($received_posts)) {
+                    $received_posts = [];
+                }
+                
+                if ($received_count > 0) {
+                    update_user_meta($post_author_id, '_critiques_received_count', $received_count - 1);
+                }
+                if (($key = array_search($post_id, $received_posts)) !== false) {
+                    unset($received_posts[$key]);
+                    update_user_meta($post_author_id, '_critiques_received_posts', array_values($received_posts));
+                }
+            }
+            
             wp_send_json_success([
                 'message' => 'Comment deleted',
                 'post_id' => $post_id,
@@ -553,6 +606,39 @@ function handle_delete_comment() {
         $result = wp_delete_comment($comment_id, true); // Force delete
         
         if ($result) {
+            // If critique, decrement counters
+            if ($is_critique && $post_author_id > 0) {
+                // Decrement commenter's given count
+                $given_count = (int) get_user_meta($current_user_id, '_critiques_given_count', true);
+                $given_posts = get_user_meta($current_user_id, '_critiques_given_posts', true);
+                if (!is_array($given_posts)) {
+                    $given_posts = [];
+                }
+                
+                if ($given_count > 0) {
+                    update_user_meta($current_user_id, '_critiques_given_count', $given_count - 1);
+                }
+                if (($key = array_search($post_id, $given_posts)) !== false) {
+                    unset($given_posts[$key]);
+                    update_user_meta($current_user_id, '_critiques_given_posts', array_values($given_posts));
+                }
+                
+                // Decrement post author's received count
+                $received_count = (int) get_user_meta($post_author_id, '_critiques_received_count', true);
+                $received_posts = get_user_meta($post_author_id, '_critiques_received_posts', true);
+                if (!is_array($received_posts)) {
+                    $received_posts = [];
+                }
+                
+                if ($received_count > 0) {
+                    update_user_meta($post_author_id, '_critiques_received_count', $received_count - 1);
+                }
+                if (($key = array_search($post_id, $received_posts)) !== false) {
+                    unset($received_posts[$key]);
+                    update_user_meta($post_author_id, '_critiques_received_posts', array_values($received_posts));
+                }
+            }
+            
             wp_send_json_success([
                 'message' => 'Comment deleted',
                 'post_id' => $post_id,
