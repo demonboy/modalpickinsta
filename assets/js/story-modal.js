@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Intercept clicks in homepage loop for story titles/images/read-more links
+    // DISABLED: Story posts now open as regular WordPress posts instead of modal
+    /*
     document.body.addEventListener('click', (e) => {
         const link = e.target.closest('a');
         if (!link) return;
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         openStoryModalFor(postId);
     });
+    */
 
     // Remove full modifier on close (UI close)
     document.body.addEventListener('click', (e) => {

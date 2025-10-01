@@ -903,3 +903,103 @@ function hrphoto_viewer_avatar_shortcode($atts){
     return get_avatar($uid, $size, '', $alt, $args);
 }
 add_shortcode('viewer_avatar', 'hrphoto_viewer_avatar_shortcode');
+
+// EDIT POST SHORTCODE
+function hrphoto_edit_post_shortcode($atts) {
+    // Must be logged in
+    if (!is_user_logged_in()) {
+        return '';
+    }
+
+    $atts = shortcode_atts([
+        'id' => 0,
+        'text' => 'Edit',
+    ], $atts, 'edit_post');
+
+    $post_id = (int) $atts['id'];
+    
+    // Try to get post ID from context if not provided
+    if ($post_id <= 0) {
+        global $post;
+        if ($post instanceof WP_Post) {
+            $post_id = (int) $post->ID;
+        }
+    }
+    
+    if ($post_id <= 0) {
+        return '';
+    }
+
+    // Get post object
+    $post_obj = get_post($post_id);
+    if (!$post_obj) {
+        return '';
+    }
+
+    // Only allow 1hrphoto and story post types
+    if (!in_array($post_obj->post_type, array('1hrphoto', 'story'), true)) {
+        return '';
+    }
+
+    // Check if current user is the post author
+    $current_user_id = get_current_user_id();
+    if ((int) $post_obj->post_author !== $current_user_id) {
+        return '';
+    }
+
+    $text = esc_html($atts['text']);
+    $post_type = esc_attr($post_obj->post_type);
+
+    return '<a href="#" class="edit-post-link" data-edit-post="' . esc_attr($post_id) . '" data-post-type="' . $post_type . '">' . $text . '</a>';
+}
+add_shortcode('edit_post', 'hrphoto_edit_post_shortcode');
+
+// DELETE POST SHORTCODE
+function hrphoto_delete_post_shortcode($atts) {
+    // Must be logged in
+    if (!is_user_logged_in()) {
+        return '';
+    }
+
+    $atts = shortcode_atts([
+        'id' => 0,
+        'text' => 'Delete',
+    ], $atts, 'delete_post');
+
+    $post_id = (int) $atts['id'];
+    
+    // Try to get post ID from context if not provided
+    if ($post_id <= 0) {
+        global $post;
+        if ($post instanceof WP_Post) {
+            $post_id = (int) $post->ID;
+        }
+    }
+    
+    if ($post_id <= 0) {
+        return '';
+    }
+
+    // Get post object
+    $post_obj = get_post($post_id);
+    if (!$post_obj) {
+        return '';
+    }
+
+    // Only allow 1hrphoto and story post types
+    if (!in_array($post_obj->post_type, array('1hrphoto', 'story'), true)) {
+        return '';
+    }
+
+    // Check if current user is the post author
+    $current_user_id = get_current_user_id();
+    if ((int) $post_obj->post_author !== $current_user_id) {
+        return '';
+    }
+
+    $text = esc_html($atts['text']);
+    $post_type = esc_attr($post_obj->post_type);
+
+    return '<a href="#" class="delete-post-link" data-delete-post="' . esc_attr($post_id) . '" data-post-type="' . $post_type . '">' . $text . '</a>';
+}
+add_shortcode('delete_post', 'hrphoto_delete_post_shortcode');

@@ -157,18 +157,58 @@
 #universal-modal.modal--full .wp-block-post-content p { margin: 1rem 0; }
 #universal-modal.modal--full .wp-block-post-content figure.wp-block-image { margin: 1rem 0; }
 
+/* Modal view: link styling (inherit theme) */
+#universal-modal.modal--full .wp-block-post-content a {
+  color: inherit;
+  text-decoration: underline;
+}
+#universal-modal.modal--full .wp-block-post-content a:hover {
+  text-decoration: none;
+}
+
+/* Front-end Story view: paragraph spacing */
+.single.single-story .wp-block-post-content p {
+  margin: 2rem 0;
+}
+.single.single-story .wp-block-post-content p:first-child {
+  margin-top: 0;
+}
+.single.single-story .wp-block-post-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Front-end Story view: link styling (inherit theme) */
+.single.single-story .wp-block-post-content a {
+  color: inherit;
+  text-decoration: underline;
+}
+.single.single-story .wp-block-post-content a:hover {
+  text-decoration: none;
+}
+
 /* Front-end Story view: center oversized alignwide images inside figure */
 @media (min-width: 782px) {
   .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full {
+    max-width: var(--wp--style--global--content-size) !important;
+    margin-left: auto;
+    margin-right: auto;
     overflow: visible;
   }
   .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full > img {
     display: block;
-    width: 110%;
+    width: 120%;
     max-width: none;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
+  }
+  .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full > figcaption {
+    width: 120%;
+    max-width: none;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: left;
   }
 }
 @media (max-width: 781px) {
@@ -178,6 +218,14 @@
     position: static;
     left: auto;
     transform: none;
+  }
+  .single.single-story .wp-block-post-content figure.wp-block-image.alignwide.size-full > figcaption {
+    width: 100%;
+    max-width: 100%;
+    position: static;
+    left: auto;
+    transform: none;
+    text-align: left;
   }
 }
 

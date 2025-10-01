@@ -111,6 +111,29 @@ function ajax_get_post_creation_form() {
         wp_send_json_error('Invalid post type');
     }
 
+    // Check if we're editing an existing post
+    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $is_editing = false;
+    $editing_post = null;
+
+    if ($post_id > 0) {
+        $editing_post = get_post($post_id);
+        
+        // Verify post exists and user is the author
+        if ($editing_post && (int) $editing_post->post_author === get_current_user_id()) {
+            // Verify post type matches
+            if ($editing_post->post_type === $post_type) {
+                $is_editing = true;
+            }
+        }
+        
+        // If verification failed, treat as new post
+        if (!$is_editing) {
+            $post_id = 0;
+            $editing_post = null;
+        }
+    }
+
     // Get ACF field group
     $field_group = acf_get_field_group('group_68b878117b7bf');
     $fields = array();
@@ -237,6 +260,7 @@ function should_show_field_for_post_type($field, $post_type) {
 
 /**
  * Convert Story editor figures to core/image blocks with alignment.
+ * Strips all formatting from captions.
  *
  * @param string $html Raw sanitized editor HTML (figures with data-attachment-id)
  * @param string $align 'wide' or 'full'
@@ -248,11 +272,12 @@ function hrphoto_convert_story_figures_to_image_blocks($html, $align = 'wide') {
         $id = (int) $m[1];
         $inner = $m[2];
 
-        // Extract caption text only; rebuild a clean figcaption to satisfy block validation
+        // Extract caption text and strip ALL formatting (bold, italic, etc.)
         $caption_html = '';
         $caption_text = '';
-        if (preg_match('/<figcaption[\s\S]*?<\/figcaption>/i', $inner, $capm)) {
-            $caption_text = trim( wp_strip_all_tags( $capm[0] ) );
+        if (preg_match('/<figcaption[\s\S]*?>([\s\S]*?)<\/figcaption>/i', $inner, $capm)) {
+            // Strip all HTML tags including formatting
+            $caption_text = trim( wp_strip_all_tags( $capm[1] ) );
             if ($caption_text !== '') {
                 $caption_html = '<figcaption class="wp-element-caption">' . esc_html( $caption_text ) . '</figcaption>';
             }
@@ -298,52 +323,111 @@ function hrphoto_convert_story_figures_to_image_blocks($html, $align = 'wide') {
 /**
  * Normalize Story editor HTML to top-level block markup.
  * - Converts figures to core/image blocks (align wide/full)
- * - Wraps non-figure text runs into core/paragraph blocks
- * - Removes wrapper divs to avoid Classic fallback
+ * - Converts headings to core/heading blocks
+ * - Converts paragraphs to core/paragraph blocks
+ * - Preserves inline formatting (bold, italic, links) within text
+ * - Strips formatting tags that wrap around figures
  */
 function hrphoto_normalize_story_content_to_blocks($html, $align = 'wide') {
     // Remove outer wrappers while keeping inner content
     $html = preg_replace('/^\s*<div[^>]*>([\s\S]*)<\/div>\s*$/i', '$1', $html);
+    
+    // Clean up malformed HTML from rich text editor:
+    // 1. Convert <div> tags to line breaks (editor uses divs for paragraphs)
+    $html = preg_replace('/<div[^>]*>/i', '', $html);
+    $html = preg_replace('/<\/div>/i', '<br>', $html);
+    
+    // 2. Strip formatting tags (b, strong, i, em) that wrap around figure elements
+    // This fixes the issue where bold/italic state wraps the entire image block
+    $html = preg_replace('/<(b|strong|i|em|u)([^>]*)>\s*(<figure[^>]*data-attachment-id[^>]*>[\s\S]*?<\/figure>)\s*<\/\1>/i', '$3', $html);
+    // Handle nested formatting (e.g., <i><b><figure></b></i>)
+    $html = preg_replace('/<(b|strong|i|em|u)([^>]*)>\s*(<figure[^>]*data-attachment-id[^>]*>[\s\S]*?<\/figure>)\s*<\/\1>/i', '$3', $html);
+    
+    // 3. Normalize multiple <br> tags to paragraph breaks
+    $html = preg_replace('/(<br\s*\/?>[\s]*)+/i', '</p><p>', $html);
+    
+    // 4. Wrap content in paragraph if not already wrapped
+    if (!preg_match('/^<p[^>]*>/i', $html)) {
+        $html = '<p>' . $html . '</p>';
+    }
+    
+    // 5. Clean up empty paragraphs and normalize
+    $html = preg_replace('/<p[^>]*>[\s]*<\/p>/i', '', $html);
+    $html = preg_replace('/<p[^>]*>[\s]*<br[\s\/]*>[\s]*<\/p>/i', '', $html);
 
     $blocks = array();
-    $cursor = 0;
-    $pattern = '/<figure[^>]*data-attachment-id="(\d+)"[^>]*>[\s\S]*?<\/figure>/i';
-    // Find all figure matches to split text in-between into paragraphs
-    if (preg_match_all($pattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
-        foreach ($matches[0] as $idx => $match) {
-            $match_str = $match[0];
-            $start = $match[1];
-            // Text before this figure
-            $before = substr($html, $cursor, $start - $cursor);
-            $before = trim($before);
-            if ($before !== '') {
-                $para_text = wp_strip_all_tags($before);
-                $para_text = trim(preg_replace('/\s+/', ' ', $para_text));
-                if ($para_text !== '') {
-                    $blocks[] = '<!-- wp:paragraph --><p>' . esc_html($para_text) . '</p><!-- /wp:paragraph -->';
+    
+    // First pass: extract all figures and mark their positions
+    $figures = array();
+    $figure_pattern = '/<figure[^>]*data-attachment-id="[^"]*"[^>]*>[\s\S]*?<\/figure>/i';
+    
+    // Replace figures with unique placeholders and store them
+    $placeholder_index = 0;
+    $html = preg_replace_callback($figure_pattern, function($match) use (&$figures, &$placeholder_index) {
+        $placeholder = '___FIGURE_PLACEHOLDER_' . $placeholder_index . '___';
+        $figures[$placeholder] = $match[0];
+        $placeholder_index++;
+        return $placeholder;
+    }, $html);
+    
+    // Now split by block-level elements (headings and paragraphs only, figures already extracted)
+    $pattern = '/(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>|<p[^>]*>[\s\S]*?<\/p>)/i';
+    $parts = preg_split($pattern, $html, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    
+    foreach ($parts as $part) {
+        $part = trim($part);
+        if ($part === '') continue;
+        
+        // Check if this part contains a figure placeholder
+        if (preg_match('/___FIGURE_PLACEHOLDER_(\d+)___/', $part, $placeholder_match)) {
+            $placeholder = $placeholder_match[0];
+            // Get the figure content
+            if (isset($figures[$placeholder])) {
+                $figure_html = $figures[$placeholder];
+                // Strip any remaining formatting tags around the figure
+                $figure_html = preg_replace('/<\/?(?:b|strong|i|em|u)[^>]*>/i', '', $figure_html);
+                // Add as top-level block
+                $blocks[] = hrphoto_convert_story_figures_to_image_blocks($figure_html, $align);
+                
+                // Handle any text before/after the placeholder in the same part
+                $text_parts = preg_split('/___FIGURE_PLACEHOLDER_\d+___/', $part);
+                foreach ($text_parts as $text_part) {
+                    $text_part = trim($text_part);
+                    if ($text_part !== '' && $text_part !== '<br>' && $text_part !== '<br />') {
+                        $text_content = wp_kses_post($text_part);
+                        $blocks[] = '<!-- wp:paragraph --><p>' . $text_content . '</p><!-- /wp:paragraph -->';
+                    }
                 }
             }
-            // Convert the figure itself
-            $figure_html = $match_str;
-            $blocks[] = hrphoto_convert_story_figures_to_image_blocks($figure_html, $align);
-            // Advance cursor
-            $cursor = $start + strlen($match_str);
+            continue;
         }
-        // Trailing text after last figure
-        $after = trim(substr($html, $cursor));
-        if ($after !== '') {
-            $para_text = wp_strip_all_tags($after);
-            $para_text = trim(preg_replace('/\s+/', ' ', $para_text));
-            if ($para_text !== '') {
-                $blocks[] = '<!-- wp:paragraph --><p>' . esc_html($para_text) . '</p><!-- /wp:paragraph -->';
+        
+        // Handle headings (h1-h6)
+        if (preg_match('/<h([1-6])[^>]*>([\s\S]*?)<\/h[1-6]>/i', $part, $h_match)) {
+            $level = (int) $h_match[1];
+            $heading_content = wp_kses_post($h_match[2]); // Keep inline formatting
+            $heading_content = trim($heading_content);
+            if ($heading_content !== '' && $heading_content !== '<br>' && $heading_content !== '<br />') {
+                $attrs = array('level' => $level);
+                $blocks[] = '<!-- wp:heading ' . wp_json_encode($attrs) . ' --><h' . $level . '>' . $heading_content . '</h' . $level . '><!-- /wp:heading -->';
             }
         }
-    } else {
-        // No figures: treat the whole content as a paragraph if non-empty
-        $para_text = wp_strip_all_tags($html);
-        $para_text = trim(preg_replace('/\s+/', ' ', $para_text));
-        if ($para_text !== '') {
-            $blocks[] = '<!-- wp:paragraph --><p>' . esc_html($para_text) . '</p><!-- /wp:paragraph -->';
+        // Handle paragraphs
+        elseif (preg_match('/<p[^>]*>([\s\S]*?)<\/p>/i', $part, $p_match)) {
+            $para_content = wp_kses_post($p_match[1]); // Keep inline formatting
+            $para_content = trim($para_content);
+            // Skip empty paragraphs or paragraphs with just breaks
+            if ($para_content !== '' && $para_content !== '<br>' && $para_content !== '<br />') {
+                $blocks[] = '<!-- wp:paragraph --><p>' . $para_content . '</p><!-- /wp:paragraph -->';
+            }
+        }
+        // Handle loose text (wrap in paragraph)
+        else {
+            $text = wp_kses_post($part); // Keep inline formatting
+            $text = trim($text);
+            if ($text !== '' && $text !== '<br>' && $text !== '<br />') {
+                $blocks[] = '<!-- wp:paragraph --><p>' . $text . '</p><!-- /wp:paragraph -->';
+            }
         }
     }
 
@@ -393,7 +477,7 @@ function hrphoto_render_story_figures_with_images($html) {
     );
 }
 
-// AJAX handler for post creation
+// AJAX handler for post creation and editing
 function ajax_create_post() {
     // Check if user is logged in
     if (!is_user_logged_in()) {
@@ -403,6 +487,21 @@ function ajax_create_post() {
     // Verify nonce
     if (!wp_verify_nonce($_POST['nonce'], 'ajax_nonce')) {
         wp_die('Security check failed');
+    }
+
+    // Check if we're editing an existing post
+    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $is_editing = false;
+
+    if ($post_id > 0) {
+        $existing_post = get_post($post_id);
+        
+        // Verify post exists and user is the author
+        if ($existing_post && (int) $existing_post->post_author === get_current_user_id()) {
+            $is_editing = true;
+        } else {
+            wp_send_json_error('You do not have permission to edit this post');
+        }
     }
 
     $post_type = sanitize_text_field($_POST['post_type']);
@@ -494,22 +593,33 @@ function ajax_create_post() {
     // Normalize title case (apply on create/edit)
     $normalized_title = ucwords( strtolower( (string) $post_title ) );
 
-    // Create the post
+    // Create or update the post
     $post_data = array(
         'post_title' => $normalized_title,
         'post_excerpt' => $post_excerpt,
         'post_content' => $post_content,
         'post_type' => $post_type,
         'post_status' => 'publish',
-        'post_author' => get_current_user_id(),
         'post_category' => array($category_id),
     );
 
-    $post_id = wp_insert_post($post_data);
-
-    // wp_insert_post returns 0 or WP_Error on failure
-    if (is_wp_error($post_id) || 0 === (int) $post_id) {
-        wp_send_json_error('Failed to create post');
+    if ($is_editing) {
+        // Update existing post
+        $post_data['ID'] = $post_id;
+        $result = wp_update_post($post_data);
+        
+        if (is_wp_error($result) || 0 === (int) $result) {
+            wp_send_json_error('Failed to update post');
+        }
+    } else {
+        // Create new post
+        $post_data['post_author'] = get_current_user_id();
+        $post_id = wp_insert_post($post_data);
+        
+        // wp_insert_post returns 0 or WP_Error on failure
+        if (is_wp_error($post_id) || 0 === (int) $post_id) {
+            wp_send_json_error('Failed to create post');
+        }
     }
 
     // Debug: Log what we received
@@ -624,11 +734,120 @@ function ajax_create_post() {
 
     // Prepare success message
     $post_type_label = ($post_type === '1hrphoto') ? '1 Hour Photo' : 'Story';
-    $success_message = $post_type_label . ' created successfully!';
+    $action = $is_editing ? 'updated' : 'created';
+    $success_message = $post_type_label . ' ' . $action . ' successfully!';
 
     wp_send_json_success(array(
         'message' => $success_message,
-        'post_id' => $post_id
+        'post_id' => $post_id,
+        'post_url' => get_permalink($post_id)
     ));
 }
 add_action('wp_ajax_create_post', 'ajax_create_post');
+
+// AJAX handler for deleting a post (moves to trash)
+function ajax_delete_post() {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Unauthorized access');
+    }
+
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'ajax_nonce')) {
+        wp_send_json_error('Security check failed');
+    }
+
+    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+
+    if ($post_id <= 0) {
+        wp_send_json_error('Invalid post ID');
+    }
+
+    $post = get_post($post_id);
+
+    if (!$post) {
+        wp_send_json_error('Post not found');
+    }
+
+    // Verify post type
+    if (!in_array($post->post_type, array('1hrphoto', 'story'), true)) {
+        wp_send_json_error('Invalid post type');
+    }
+
+    // Verify user is the post author
+    if ((int) $post->post_author !== get_current_user_id()) {
+        wp_send_json_error('You do not have permission to delete this post');
+    }
+
+    // Move post to trash
+    $result = wp_trash_post($post_id);
+
+    if (!$result) {
+        wp_send_json_error('Failed to delete post');
+    }
+
+    $post_type_label = ($post->post_type === '1hrphoto') ? '1 Hour Photo' : 'Story';
+
+    wp_send_json_success(array(
+        'message' => $post_type_label . ' moved to trash successfully'
+    ));
+}
+add_action('wp_ajax_delete_post', 'ajax_delete_post');
+
+// AJAX handler for deleting temporary uploaded images
+function ajax_delete_temp_image() {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error('Unauthorized access');
+    }
+
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'ajax_nonce')) {
+        wp_send_json_error('Security check failed');
+    }
+
+    $attachment_id = isset($_POST['attachment_id']) ? (int) $_POST['attachment_id'] : 0;
+
+    if ($attachment_id <= 0) {
+        wp_send_json_error('Invalid attachment ID');
+    }
+
+    $attachment = get_post($attachment_id);
+
+    if (!$attachment || $attachment->post_type !== 'attachment') {
+        wp_send_json_error('Attachment not found');
+    }
+
+    // Verify user uploaded this attachment (check author or parent post author)
+    $user_id = get_current_user_id();
+    $can_delete = false;
+
+    // Check if user is attachment author
+    if ((int) $attachment->post_author === $user_id) {
+        $can_delete = true;
+    }
+
+    // Or check if user is the parent post author
+    if (!$can_delete && $attachment->post_parent > 0) {
+        $parent_post = get_post($attachment->post_parent);
+        if ($parent_post && (int) $parent_post->post_author === $user_id) {
+            $can_delete = true;
+        }
+    }
+
+    if (!$can_delete) {
+        wp_send_json_error('You do not have permission to delete this image');
+    }
+
+    // Permanently delete the attachment
+    $result = wp_delete_attachment($attachment_id, true);
+
+    if (!$result) {
+        wp_send_json_error('Failed to delete image');
+    }
+
+    wp_send_json_success(array(
+        'message' => 'Image deleted successfully'
+    ));
+}
+add_action('wp_ajax_delete_temp_image', 'ajax_delete_temp_image');

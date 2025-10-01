@@ -177,6 +177,12 @@
     z-index: 2;
     background: #fff;
 }
+
+/* Story editor toolbar button active state */
+.story-editor-toolbar button.active {
+    background-color: #111;
+    color: #fff;
+}
 .story-image-count {
     font-size: 0.9rem;
     margin: 0 0 6px;
@@ -439,4 +445,199 @@
     padding: 1rem;
     border-radius: 4px;
     margin-bottom: 1rem;
+}
+
+/* Delete Confirmation Modal */
+.delete-confirmation {
+    text-align: center;
+    padding: 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.delete-confirmation h2 {
+    color: var(--wp--preset--color--vivid-red, #d63638);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.delete-confirmation p {
+    margin-bottom: 2rem;
+    color: var(--wp--preset--color--contrast, #000);
+    line-height: 1.6;
+}
+
+.delete-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-cancel,
+.btn-delete {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.btn-cancel {
+    background: var(--wp--preset--color--contrast-2, #ddd);
+    color: var(--wp--preset--color--contrast, #000);
+}
+
+.btn-cancel:hover {
+    background: var(--wp--preset--color--contrast-3, #ccc);
+}
+
+.btn-delete {
+    background: var(--wp--preset--color--vivid-red, #d63638);
+    color: #fff;
+}
+
+.btn-delete:hover {
+    background: #a02828;
+}
+
+.btn-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Red X Image Remove Button for 1hrphoto thumbnails */
+.thumb-item {
+    position: relative;
+}
+
+.remove-thumb-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    background: var(--wp--preset--color--vivid-red, #d63638);
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+}
+
+.thumb-item:hover .remove-thumb-btn {
+    opacity: 1;
+}
+
+.remove-thumb-btn:hover {
+    background: #a02828;
+    transform: scale(1.1);
+}
+
+.remove-thumb-btn:active {
+    transform: scale(0.95);
+}
+
+/* Red X for Story featured image (using different structure) */
+.acf-image-preview {
+    position: relative;
+    display: inline-block;
+    margin: 0.5rem;
+}
+
+.acf-image-preview img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.remove-image {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: var(--wp--preset--color--vivid-red, #d63638);
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.remove-image:hover {
+    background: #a02828;
+    transform: scale(1.1);
+}
+
+.remove-image:active {
+    transform: scale(0.95);
+}
+
+/* Edit and Delete Post Links */
+.edit-post-link,
+.delete-post-link {
+    text-decoration: underline;
+    color: inherit;
+    cursor: pointer;
+}
+
+.edit-post-link:hover,
+.delete-post-link:hover {
+    text-decoration: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .delete-confirmation {
+        padding: 1.5rem;
+    }
+    
+    .delete-confirmation h2 {
+        font-size: 1.25rem;
+    }
+    
+    .delete-actions {
+        flex-direction: column;
+    }
+    
+    .btn-cancel,
+    .btn-delete {
+        width: 100%;
+    }
+    
+    .remove-thumb-btn {
+        opacity: 1; /* Always visible on mobile */
+        width: 24px;
+        height: 24px;
+        font-size: 16px;
+        top: 2px;
+        right: 2px;
+    }
+    
+    .remove-image {
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+        top: 4px;
+        right: 4px;
+    }
 }

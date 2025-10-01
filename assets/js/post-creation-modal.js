@@ -46,16 +46,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Load post creation form
-    async function loadPostCreationForm(postType) {
+    // Load post creation form (with optional post_id for editing)
+    async function loadPostCreationForm(postType, postId = null) {
         try {
+            const params = {
+                action: 'get_post_creation_form',
+                post_type: postType,
+                nonce: ajax_object.nonce
+            };
+            
+            if (postId) {
+                params.post_id = postId;
+            }
+            
             const response = await fetch('/wp-admin/admin-ajax.php', {
                 method: 'POST',
-                body: new URLSearchParams({
-                    action: 'get_post_creation_form',
-                    post_type: postType,
-                    nonce: ajax_object.nonce
-                })
+                body: new URLSearchParams(params)
             });
             
             const data = await response.json();
@@ -305,6 +311,148 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Event delegation for edit post shortcode clicks
+    document.body.addEventListener('click', function(e) {
+        const editPostLink = e.target.closest('[data-edit-post]');
+        if (editPostLink) {
+            e.preventDefault();
+            const postId = editPostLink.getAttribute('data-edit-post');
+            const postType = editPostLink.getAttribute('data-post-type');
+            
+            if (postId && postType) {
+                // Open modal with loading state
+                if (window.openModal) {
+                    window.openModal('<div class="loading">Loading...</div>');
+                }
+                loadPostCreationForm(postType, postId);
+            }
+        }
+    });
+    
+    // Event delegation for delete post shortcode clicks
+    document.body.addEventListener('click', function(e) {
+        const deletePostLink = e.target.closest('[data-delete-post]');
+        if (deletePostLink) {
+            e.preventDefault();
+            const postId = deletePostLink.getAttribute('data-delete-post');
+            const postType = deletePostLink.getAttribute('data-post-type');
+            
+            if (postId && postType) {
+                showDeleteConfirmation(postId, postType);
+            }
+        }
+    });
+    
+    // Show styled delete confirmation modal
+    function showDeleteConfirmation(postId, postType) {
+        const postTypeLabel = postType === '1hrphoto' ? '1 Hour Photo' : 'Story';
+        const html = `
+            <div class="delete-confirmation">
+                <h2>Delete ${postTypeLabel}?</h2>
+                <p>This action will move your post to trash. You can restore it from your WordPress admin.</p>
+                <div class="delete-actions">
+                    <button type="button" class="btn-cancel" onclick="window.closeModal && window.closeModal()">Cancel</button>
+                    <button type="button" class="btn-delete" data-post-id="${postId}">Delete</button>
+                </div>
+            </div>
+        `;
+        
+        if (window.openModal) {
+            window.openModal(html);
+        }
+        
+        // Handle delete button click
+        setTimeout(() => {
+            const deleteBtn = document.querySelector('.btn-delete[data-post-id="' + postId + '"]');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    deletePost(postId);
+                });
+            }
+        }, 100);
+    }
+    
+    // Delete post via AJAX
+    async function deletePost(postId) {
+        const deleteBtn = document.querySelector('.btn-delete[data-post-id="' + postId + '"]');
+        if (deleteBtn) {
+            deleteBtn.textContent = 'Deleting...';
+            deleteBtn.disabled = true;
+        }
+        
+        try {
+            const response = await fetch('/wp-admin/admin-ajax.php', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'delete_post',
+                    post_id: postId,
+                    nonce: ajax_object.nonce
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Close modal
+                if (window.closeModal) {
+                    window.closeModal();
+                }
+                
+                // Redirect to referrer or home
+                const referrer = document.referrer;
+                if (referrer && referrer.indexOf(window.location.host) !== -1 && referrer !== window.location.href) {
+                    window.location.href = referrer;
+                } else {
+                    window.location.href = '/';
+                }
+            } else {
+                alert(data.data || 'Failed to delete post');
+                if (deleteBtn) {
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.disabled = false;
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            alert('Failed to delete post');
+            if (deleteBtn) {
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.disabled = false;
+            }
+        }
+    }
+    
+    // Event delegation for red X image removal buttons (Story featured image only)
+    document.body.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.remove-image');
+        if (removeBtn) {
+            e.preventDefault();
+            const attachmentId = removeBtn.getAttribute('data-attachment-id');
+            const preview = removeBtn.closest('.acf-image-preview');
+            
+            if (attachmentId && preview) {
+                // Remove from UI immediately
+                preview.remove();
+                
+                // Clear featured image field (this is for story featured image)
+                const featuredField = document.querySelector('#featured-image-id');
+                if (featuredField) {
+                    featuredField.value = '';
+                    const captionField = document.querySelector('#featured-image-caption');
+                    if (captionField) {
+                        captionField.value = '';
+                    }
+                    
+                    // Update button text
+                    const uploaderBtn = document.querySelector('#story-featured-uploader');
+                    if (uploaderBtn) {
+                        uploaderBtn.textContent = 'Add featured image';
+                    }
+                }
+            }
+        }
+    });
+    
     // Handle ACF image field clicks - direct AJAX upload (no media frame)
     document.body.addEventListener('click', function(e) {
         const addBtn = e.target.closest('.acf-button[data-name="add"]');
@@ -451,6 +599,26 @@ document.addEventListener('DOMContentLoaded', () => {
             img.alt = 'Selected image';
             img.loading = 'lazy';
             item.appendChild(img);
+            
+            // Add red X remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-thumb-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.setAttribute('aria-label', 'Remove image');
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                // Remove from orderedIds and srcById
+                const index = orderedIds.indexOf(id);
+                if (index > -1) {
+                    orderedIds.splice(index, 1);
+                    srcById.delete(id);
+                    rebuildThumbs();
+                    syncHiddenInputs();
+                }
+            });
+            item.appendChild(removeBtn);
 
             // Drag handlers
             item.addEventListener('dragstart', e => {
@@ -563,6 +731,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (err) { err.textContent = 'You need to upload three images.'; err.style.display = 'block'; }
             }
         });
+        
+        // Load existing images in edit mode (must be after function definitions)
+        const editMode = thumbsRow.getAttribute('data-edit-mode') === '1';
+        if (editMode) {
+            try {
+                const existingData = thumbsRow.getAttribute('data-existing-images');
+                if (existingData) {
+                    const existing = JSON.parse(existingData);
+                    if (Array.isArray(existing)) {
+                        existing.forEach(item => {
+                            if (item.id && item.url) {
+                                orderedIds.push(Number(item.id));
+                                srcById.set(Number(item.id), item.url);
+                            }
+                        });
+                        rebuildThumbs();
+                        syncHiddenInputs();
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load existing images:', e);
+            }
+        }
     }
     // Fallback: dedicated button next to image field (Upload from device)
     document.body.addEventListener('click', function(e) {
@@ -835,11 +1026,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnLink = form.querySelector('.btn-story-link');
         const btnInsert = form.querySelector('.btn-story-insert-image');
 
+        // Update toolbar button states based on current selection
+        function updateToolbarState() {
+            if (!btnBold || !btnItalic || !btnHeading) return;
+            
+            try {
+                // Check if bold is active
+                const isBold = document.queryCommandState('bold');
+                btnBold.classList.toggle('active', isBold);
+                
+                // Check if italic is active
+                const isItalic = document.queryCommandState('italic');
+                btnItalic.classList.toggle('active', isItalic);
+                
+                // Check if heading is active
+                const formatBlock = document.queryCommandValue('formatBlock');
+                const isHeading = formatBlock && /h[1-6]/i.test(formatBlock);
+                btnHeading.classList.toggle('active', isHeading);
+            } catch (e) {
+                // queryCommandState can throw in some browsers
+            }
+        }
+        
+        // Update button states on selection change
+        editor.addEventListener('mouseup', updateToolbarState);
+        editor.addEventListener('keyup', updateToolbarState);
+        editor.addEventListener('focus', updateToolbarState);
+        
         function surround(tag) {
             document.execCommand('styleWithCSS', false, false);
             document.execCommand(tag === 'strong' ? 'bold' : 'italic', false);
             editor.focus();
             syncHidden();
+            updateToolbarState();
         }
         btnBold && btnBold.addEventListener('click', () => surround('strong'));
         btnItalic && btnItalic.addEventListener('click', () => surround('em'));
@@ -849,6 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.execCommand('formatBlock', false, 'h2');
             editor.focus();
             syncHidden();
+            updateToolbarState();
         });
 
         btnLink && btnLink.addEventListener('click', () => {
@@ -859,6 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editor.querySelectorAll('a[href="' + CSS.escape(url) + '"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
             editor.focus();
             syncHidden();
+            updateToolbarState();
         });
 
         btnInsert && btnInsert.addEventListener('click', () => {

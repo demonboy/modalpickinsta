@@ -84,6 +84,8 @@ require get_stylesheet_directory() . '/inc/search-filters.php';
 /* ACF SAVE FILTERS (none; using standard ACF behavior) */
 
 /* Add data-story-id to Story links emitted by core blocks */
+// DISABLED: Story posts now open as regular WordPress posts instead of modal
+/*
 add_filter('render_block', function($block_content, $block){
     if (!is_string($block_content) || empty($block_content)) return $block_content;
     if (empty($block['blockName'])) return $block_content;
@@ -102,6 +104,7 @@ add_filter('render_block', function($block_content, $block){
     );
     return $updated ?: $block_content;
 }, 10, 2);
+*/
 
 
 // Mark core/post-author-name output so we can live-update the displayed name after profile edits
