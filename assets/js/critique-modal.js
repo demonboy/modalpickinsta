@@ -28,7 +28,6 @@
     
     var form = createEl('div', 'critique-form');
     textarea = createEl('textarea', 'critique-textarea');
-    textarea.setAttribute('placeholder', 'Share your constructive feedback here (minimum 100 characters)...');
     textarea.setAttribute('maxlength', '5000');
     
     counter = createEl('div', 'critique-counter');
@@ -106,14 +105,20 @@
     })
     .then(response => response.json())
     .then(data => {
-      if (data.success && data.data.has_critique) {
-        // Pre-fill with existing critique
-        title.textContent = 'Edit Your Critique';
-        textarea.value = data.data.content;
-        existingCommentId = data.data.comment_id;
-        updateCounter();
-      } else {
-        title.textContent = 'Leave a Critique';
+      if (data.success) {
+        // Set placeholder with author's name
+        var authorName = data.data.author_name || 'the photographer';
+        textarea.setAttribute('placeholder', 'Use this form to submit your constructive criticism. This differs from a standard comment in that you are offering useful feedback on the set of three photographs to help ' + authorName + ' improve their skills.');
+        
+        if (data.data.has_critique) {
+          // Pre-fill with existing critique
+          title.textContent = 'Edit Your Critique';
+          textarea.value = data.data.content;
+          existingCommentId = data.data.comment_id;
+          updateCounter();
+        } else {
+          title.textContent = 'Leave a Critique';
+        }
       }
     })
     .catch(error => {

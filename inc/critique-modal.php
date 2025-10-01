@@ -28,6 +28,10 @@ function handle_get_user_critique() {
     
     $user_id = get_current_user_id();
     
+    // Get post author's display name for placeholder
+    $post = get_post($post_id);
+    $author_display_name = $post ? get_the_author_meta('display_name', $post->post_author) : '';
+    
     // Find existing critique by this user on this post
     $existing_critique = get_comments([
         'post_id' => $post_id,
@@ -47,11 +51,13 @@ function handle_get_user_critique() {
         wp_send_json_success([
             'has_critique' => true,
             'comment_id' => $critique->comment_ID,
-            'content' => $critique->comment_content
+            'content' => $critique->comment_content,
+            'author_name' => $author_display_name
         ]);
     } else {
         wp_send_json_success([
-            'has_critique' => false
+            'has_critique' => false,
+            'author_name' => $author_display_name
         ]);
     }
 }
