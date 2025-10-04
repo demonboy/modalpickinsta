@@ -24,7 +24,11 @@ Template: twentytwentyfour
 }
 
 .chips-wrap {
-	margin-top:0px;
+	margin-top:0px !important;
+}
+
+.wp-block-post-terms__prefix {
+    color: #b5bdbc !important;
 }
 
 /* == Desktop Categories Dropdown Effect (Final Fix for Spacing) == */
@@ -323,8 +327,7 @@ body {
 }
 
 .taxonomy-category a {
-  text-decoration: underline dotted !important;
-  text-underline-offset: 3px; /* moves the underline a bit lower for readability */
+
   transition: color 0.3s ease, border-color 0.3s ease;
   color: inherit; /* keeps it aligned with text color */
   position: relative; /* <-- makes ::after align to this element */
@@ -653,7 +656,7 @@ figcaption {
 
 .wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt { margin-block-start: 0; }
 /* Ensure no extra flow spacing and prevent p-margin collapsing on excerpt row only */
-.wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt { margin-block-end: 0; display: flow-root; }
+.wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt:not(.jexcerpt) { margin-block-end: 0; display: flow-root; }
 .wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt > .wp-block-post-excerpt__excerpt { margin: 0; }
 /* Kill core flow top margin on the inline-meta excerpt row only */
 .wp-block-group.inline-meta.is-layout-flow > .wp-block-post-excerpt {
@@ -672,9 +675,7 @@ figcaption {
 
 
 
-.meta-icon-row {
-	margin-top: 10px !important; /* Adjust this value as needed. */
-}
+
 
 /* Paragraphs behave inline */
 .wp-block-group.inline-meta p {
@@ -875,3 +876,59 @@ figcaption {
   }
 }
 
+/* Expandable excerpt - 3 lines with ellipsis (query loop and single posts) */
+.type-1hrphoto .wp-block-group.inline-meta .jexcerpt,
+.type-1hrphoto .jexcerpt,
+.post-type-1hrphoto .jexcerpt,
+.single-1hrphoto .jexcerpt,
+.type-story .wp-block-group.inline-meta .jexcerpt,
+.type-story .jexcerpt,
+.post-type-story .jexcerpt,
+.single-story .jexcerpt {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+    position: relative;
+}
+
+/* 1hrphoto: expandable on click */
+.type-1hrphoto .wp-block-group.inline-meta .jexcerpt.expanded,
+.type-1hrphoto .jexcerpt.expanded,
+.post-type-1hrphoto .jexcerpt.expanded,
+.single-1hrphoto .jexcerpt.expanded {
+    -webkit-line-clamp: unset !important;
+    -webkit-box-orient: unset !important;
+    display: block !important;
+}
+
+/* Story: show [read story] instead of ellipsis */
+.type-story .jexcerpt .wp-block-post-excerpt__excerpt::after,
+.post-type-story .jexcerpt .wp-block-post-excerpt__excerpt::after,
+.single-story .jexcerpt .wp-block-post-excerpt__excerpt::after {
+    content: ' [read story]';
+    font-weight: 400;
+}
+
+/* Homepage Featured Image Hover Dim Effect */
+body.home .wp-block-post-featured-image {
+    position: relative;
+    overflow: hidden;
+}
+
+body.home .wp-block-post-featured-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    transition: background-color 0.3s ease;
+    pointer-events: none;
+}
+
+body.home .wp-block-post-featured-image:hover::after {
+    background-color: rgba(0, 0, 0, 0.4);
+}

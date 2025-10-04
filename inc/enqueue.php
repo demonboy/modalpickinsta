@@ -453,12 +453,41 @@ add_action('wp_enqueue_scripts', function(){
 	}
 });
 
+// EXPANDABLE EXCERPT
+add_action('wp_enqueue_scripts', function(){
+    wp_enqueue_script(
+        'expandable-excerpt-js',
+        get_stylesheet_directory_uri() . '/assets/js/expandable-excerpt.js',
+        array(),
+        filemtime(get_stylesheet_directory() . '/assets/js/expandable-excerpt.js'),
+        true
+    );
+});
+
 // Add captions to Featured Image block in Query Loop
 function add_featured_image_caption( $block_content, $block ) {
     if ( $block['blockName'] === 'core/post-featured-image' && is_main_query() ) {
         global $post;
         $thumbnail_id = get_post_thumbnail_id( $post->ID );
         $caption = wp_get_attachment_caption( $thumbnail_id );
+        
+        // For story posts on blog home page: replace caption with copyright
+        if ( is_home() && get_post_type( $post ) === 'story' ) {
+            // Get author metadata with fallback order: first+last → display_name → username
+            $first_name = get_the_author_meta( 'first_name', $post->post_author );
+            $last_name = get_the_author_meta( 'last_name', $post->post_author );
+            
+            if ( $first_name && $last_name ) {
+                $author_text = $first_name . ' ' . $last_name;
+            } elseif ( get_the_author_meta( 'display_name', $post->post_author ) ) {
+                $author_text = get_the_author_meta( 'display_name', $post->post_author );
+            } else {
+                $author_text = get_the_author_meta( 'user_login', $post->post_author );
+            }
+            
+            // Override with copyright caption
+            $caption = '© ' . $author_text;
+        }
 
         if ( $caption ) {
             // Wrap image and caption in figure/figcaption

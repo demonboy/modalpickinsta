@@ -947,10 +947,13 @@ function hrphoto_edit_post_shortcode($atts) {
         return '';
     }
 
-    $text = esc_html($atts['text']);
     $post_type = esc_attr($post_obj->post_type);
+    $post_title = esc_attr($post_obj->post_title);
+    $title_text = 'Edit ' . $post_title;
+    
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>';
 
-    return '<a href="#" class="edit-post-link" data-edit-post="' . esc_attr($post_id) . '" data-post-type="' . $post_type . '">' . $text . '</a>';
+    return '<a href="#" class="edit-post-link" data-edit-post="' . esc_attr($post_id) . '" data-post-type="' . $post_type . '" data-post-title="' . $post_title . '" title="' . $title_text . '" aria-label="' . $title_text . '">' . $svg . '</a>';
 }
 add_shortcode('edit_post', 'hrphoto_edit_post_shortcode');
 
@@ -997,9 +1000,12 @@ function hrphoto_delete_post_shortcode($atts) {
         return '';
     }
 
-    $text = esc_html($atts['text']);
     $post_type = esc_attr($post_obj->post_type);
+    $post_title = esc_attr($post_obj->post_title);
+    $title_text = 'Delete ' . $post_title;
+    
+    $svg = '<svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2h4a1 1 0 1 1 0 2h-1.069l-.867 12.142A2 2 0 0 1 17.069 22H6.93a2 2 0 0 1-1.995-1.858L4.07 8H3a1 1 0 0 1 0-2h4V4zm2 2h6V4H9v2zM6.074 8l.857 12H17.07l.857-12H6.074zM10 10a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1zm4 0a1 1 0 0 1 1 1v6a1 1 0 1 1-2 0v-6a1 1 0 0 1 1-1z" fill="red"/></svg>';
 
-    return '<a href="#" class="delete-post-link" data-delete-post="' . esc_attr($post_id) . '" data-post-type="' . $post_type . '">' . $text . '</a>';
+    return '<a href="#" class="delete-post-link" data-delete-post="' . esc_attr($post_id) . '" data-post-type="' . $post_type . '" data-post-title="' . $post_title . '" title="' . $title_text . '" aria-label="' . $title_text . '">' . $svg . '</a>';
 }
 add_shortcode('delete_post', 'hrphoto_delete_post_shortcode');

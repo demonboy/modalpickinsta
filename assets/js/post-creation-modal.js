@@ -82,6 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Initialize Story featured uploader and editor if present
                         initStoryFeaturedIfPresent(modalBody);
                         initStoryEditorIfPresent(modalBody);
+                        
+                        // Initialize excerpt counter for existing content (edit mode)
+                        const excerptInput = modalBody.querySelector('#post-excerpt');
+                        const excerptCounter = modalBody.querySelector('#excerpt-count');
+                        if (excerptInput && excerptCounter && excerptInput.value) {
+                            const chars = excerptInput.value.length;
+                            excerptCounter.textContent = chars + '/100 characters (max 500)';
+                            if (chars >= 100 && chars <= 500) {
+                                excerptCounter.classList.add('is-ok');
+                            } else {
+                                excerptCounter.classList.remove('is-ok');
+                            }
+                        }
                     }, 200);
                 }
             } else {
@@ -336,19 +349,19 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const postId = deletePostLink.getAttribute('data-delete-post');
             const postType = deletePostLink.getAttribute('data-post-type');
+            const postTitle = deletePostLink.getAttribute('data-post-title') || 'this post';
             
             if (postId && postType) {
-                showDeleteConfirmation(postId, postType);
+                showDeleteConfirmation(postId, postType, postTitle);
             }
         }
     });
     
     // Show styled delete confirmation modal
-    function showDeleteConfirmation(postId, postType) {
-        const postTypeLabel = postType === '1hrphoto' ? '1 Hour Photo' : 'Story';
+    function showDeleteConfirmation(postId, postType, postTitle) {
         const html = `
             <div class="delete-confirmation">
-                <h2>Delete ${postTypeLabel}?</h2>
+                <h2>Delete ${postTitle}?</h2>
                 <p>This action will move your post to trash. You can restore it from your WordPress admin.</p>
                 <div class="delete-actions">
                     <button type="button" class="btn-cancel" onclick="window.closeModal && window.closeModal()">Cancel</button>
@@ -1018,6 +1031,9 @@ document.addEventListener('DOMContentLoaded', () => {
         editor.addEventListener('keyup', syncHidden);
         const mo = new MutationObserver(() => syncHidden());
         mo.observe(editor, { childList: true, subtree: true, characterData: true });
+        
+        // Initialize counters immediately for existing content (edit mode)
+        syncHidden();
 
         // Toolbar actions
         const btnBold = form.querySelector('.btn-story-bold');

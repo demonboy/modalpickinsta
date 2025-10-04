@@ -52,6 +52,9 @@ if (isset($is_editing) && $is_editing && isset($editing_post) && $editing_post) 
 }
 
 $action_verb = (isset($is_editing) && $is_editing) ? 'Edit' : 'Create';
+$modal_title = (isset($is_editing) && $is_editing && isset($editing_post)) 
+    ? $action_verb . ' ' . $editing_post->post_title 
+    : $action_verb . ' ' . $post_type_label;
 ?>
 
 <form class="post-creation-form" data-post-type="<?php echo esc_attr($post_type); ?>" enctype="multipart/form-data">
@@ -60,7 +63,7 @@ $action_verb = (isset($is_editing) && $is_editing) ? 'Edit' : 'Create';
     <?php endif; ?>
     
     <div class="form-header">
-        <h2><?php echo esc_html($action_verb . ' ' . $post_type_label); ?></h2>
+        <h2><?php echo esc_html($modal_title); ?></h2>
         <?php if ($post_type === '1hrphoto'): ?>
         <p class="form-header-tip">Tip: Try to avoid different image dimensions. This works best when your photographs are at least the same height. You may reorder your images once uploaded.</p>
         <?php endif; ?>
@@ -241,16 +244,16 @@ $action_verb = (isset($is_editing) && $is_editing) ? 'Edit' : 'Create';
         <?php endif; ?>
     </div>
     
+    <div class="form-messages">
+        <div class="success-message" id="success-message" style="display: none;"></div>
+        <div class="error-message" id="error-message" style="display: none;"></div>
+    </div>
+    
     <div class="form-actions">
         <button type="button" class="btn-back">Back</button>
         <button type="submit" class="btn-submit">
             <span class="btn-text"><?php echo esc_html($action_verb . ' ' . $post_type_label); ?></span>
             <span class="btn-loading" style="display: none;"><?php echo $action_verb === 'Edit' ? 'Updating...' : 'Creating...'; ?></span>
         </button>
-    </div>
-    
-    <div class="form-messages">
-        <div class="success-message" id="success-message" style="display: none;"></div>
-        <div class="error-message" id="error-message" style="display: none;"></div>
     </div>
 </form>

@@ -534,7 +534,7 @@ function ajax_create_post() {
     }
 
     // Server-side excerpt character count validation (100–500 characters)
-    $excerpt_chars = strlen( wp_strip_all_tags( (string) $post_excerpt ) );
+    $excerpt_chars = mb_strlen( wp_strip_all_tags( (string) $post_excerpt ), 'UTF-8' );
     if ($excerpt_chars < 100 || $excerpt_chars > 500) {
         $errors['post_excerpt'] = 'Excerpt must be between 100 and 500 characters.';
     }

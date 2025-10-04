@@ -143,3 +143,9 @@ add_action('wp_footer', function() {
     }
 });
 
+//Display the full excerpt
+
+function twentytwentyfour_child_excerpt_length( $length ) {
+    return 500; // Change this number to your desired word count.
+}
+add_filter( 'excerpt_length', 'twentytwentyfour_child_excerpt_length', 999 );
